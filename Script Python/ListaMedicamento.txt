@@ -1,0 +1,411 @@
+Dipirona Monoidratada
+Paracetamol
+Ibuprofeno
+Diclofenaco Sodico
+Nimesulida
+Cetoprofeno
+Naproxeno
+acido Acetilsalicilico
+Meloxicam
+Celecoxibe
+Metamizol Magnesico
+Fosfato de Codeina
+Cloridrato de Tramadol
+Sulfato de Morfina
+Citrato de Fentanila
+Cloridrato de Oxicodona
+Cloridrato de Buprenorfina
+Cloridrato de Metadona
+Losartana Potassica
+Maleato de Enalapril
+Captopril
+Lisinopril
+Ramipril
+Perindopril Erbumina
+Cloridrato de Benazepril
+Valsartana
+Telmisartana
+Olmesartana Medoxomila
+Irbesartana
+Atenolol
+Cloridrato de Propranolol
+Succinato de Metoprolol
+Fumarato de Bisoprolol
+Cloridrato de Nebivolol
+Carvedilol
+Besilato de Amlodipino
+Nifedipino
+Felodipino
+Cloridrato de Verapamil
+Cloridrato de Diltiazem
+Hidroclorotiazida
+Clortalidona
+Indapamida
+Furosemida
+Bumetanida
+Espironolactona
+Eplerenona
+Cloridrato de Hidralazina
+Minoxidil
+Cloridrato de Clonidina
+Metildopa
+Digoxina
+Cloridrato de Amiodarona
+Cloridrato de Sotalol
+Cloridrato de Propafenona
+Acetato de Flecainida
+Cloridrato de Ivabradina
+Dinitrato de Isossorbida
+Mononitrato de Isossorbida
+Varfarina Sodica
+Heparina Sodica
+Enoxaparina Sodica
+Etexilato de Dabigatrana
+Rivaroxabana
+Apixabana
+Tosilato de Edoxabana
+acido Acetilsalicilico
+Bissulfato de Clopidogrel
+Prasugrel
+Ticagrelor
+Cilostazol
+Sinvastatina
+Atorvastatina Calcica
+Rosuvastatina Calcica
+Pravastatina Sodica
+Lovastatina
+Fluvastatina Sodica
+Ezetimiba
+Fenofibrato
+Bezafibrato
+Gemfibrozila
+Cloridrato de Metformina
+Glibenclamida
+Gliclazida
+Glimepirida
+Cloridrato de Pioglitazona
+Maleato de Rosiglitazona
+Insulina Humana Regular
+Insulina Humana NPH
+Insulina Glargina
+Insulina Detemir
+Insulina Degludeca
+Liraglutida
+Semaglutida
+Dulaglutida
+Fosfato de Sitagliptina
+Saxagliptina
+Linagliptina
+Vildagliptina
+Empagliflozina
+Dapagliflozina
+Canagliflozina
+Ertugliflozina
+Cloridrato de Fluoxetina
+Cloridrato de Sertralina
+Oxalato de Escitalopram
+Bromidrato de Citalopram
+Cloridrato de Paroxetina
+Maleato de Fluvoxamina
+Cloridrato de Venlafaxina
+Succinato de Desvenlafaxina
+Cloridrato de Duloxetina
+Cloridrato de Amitriptilina
+Cloridrato de Nortriptilina
+Cloridrato de Imipramina
+Cloridrato de Clomipramina
+Cloridrato de Bupropiona
+Mirtazapina
+Cloridrato de Trazodona
+Agomelatina
+Clonazepam
+Diazepam
+Alprazolam
+Bromazepam
+Lorazepam
+Midazolam
+Heitartarato de Zolpidem
+Zopiclona
+Eszopiclona
+Melatonina
+Hemifumarato de Quetiapina
+Risperidona
+Olanzapina
+Aripiprazol
+Cloridrato de Ziprasidona
+Clozapina
+Haloperidol
+Cloridrato de Clorpromazina
+Maleato de Levomepromazina
+Carbonato de Litio
+Valproato de Sodio
+acido Valproico
+Carbamazepina
+Oxcarbazepina
+Lamotrigina
+Topiramato
+Gabapentina
+Pregabalina
+Levetiracetam
+Fenitoina
+Fenobarbital
+Primidona
+Amoxicilina
+Amoxicilina + Clavulanato de Potassio
+Ampicilina
+Ampicilina + Sulbactam
+Benzilpenicilina Benzatina
+Benzilpenicilina Potassica
+Oxacilina Sodica
+Cefalexina
+Cefadroxila
+Cefuroxima Axetil
+Ceftriaxona Sodica
+Ceftazidima
+Cloridrato de Cefepima
+Meropenem Tri hidratado
+Imipenem + Cilastatina Sodica
+Ertapenem Sodico
+Cloridrato de Vancomicina
+Teicoplanina
+Linezolida
+Daptomicina
+Cloridrato de Clindamicina
+Azitromicina Di hidratada
+Claritromicina
+Estearato de Eritromicina
+Cloridrato de Ciprofloxacino
+Levofloxacino Hemieratado
+Cloridrato de Moxifloxacino
+Norfloxacino
+Ofloxacino
+Metronidazol
+Tinidazol
+Secnidazol
+Nitrofurantoina
+Fosfomicina Trometamol
+Sulfametoxazol + Trimetoprima
+Rifampicina
+Isoniazida
+Pirazinamida
+Cloridrato de Etambutol
+Aciclovir
+Cloridrato de Valaciclovir
+Ganciclovir Sodico
+Fosfato de Oseltamivir
+Zidovudina (AZT)
+Lamivudina
+Fumarato de Tenofovir Desoproxila
+Efavirenz
+Dolutegravir Sodico
+Fluconazol
+Itraconazol
+Voriconazol
+Posaconazol
+Anfotericina B
+Acetato de Caspofungina
+Micafungina Sodica
+Nistatina
+Omeprazol Sodico
+Pantoprazol Sodico
+Esomeprazol Magnesico
+Lansoprazol
+Dexlansoprazol
+Cloridrato de Ranitidina
+Famotidina
+Cimetidina
+Hidroxido de Aluminio
+Hidroxido de Magnesio
+Carbonato de Calcio
+Bicarbonato de Sodio
+Domperidona
+Cloridrato de Metoclopramida
+Bromoprida
+Cloridrato de Ondansetrona
+Dimenidrinato
+Butilbrometo de Escopolamina
+Lactulose
+Polietilenoglicol (PEG)
+Bisacodil
+Senna alexandrina
+Cloridrato de Loperamida
+Racecadotrila
+Mesalazina
+Sulfassalazina
+Prednisona
+Fosfato Sodico de Prednisolona
+Dexametasona
+Valerato de Betametasona
+Succinato Sodico de Hidrocortisona
+Acetato de Metilprednisolona
+Levotiroxina Sodica
+Propiltiouracil
+Metimazol
+Estradiol
+Progesterona
+Testosterona
+Finasterida
+Dutasterida
+Cloridrato de Tamsulosina
+Citrato de Sildenafila
+Tadalafila
+Cloridrato de Vardenafila
+Sulfato de Salbutamol
+Bromidrato de Fenoterol
+Fumarato de Formoterol
+Xinafoato de Salmeterol
+Budesonida
+Dipropionato de Beclometasona
+Propionato de Fluticasona
+Montelucaste Sodico
+Zafirlucaste
+Teofilina
+Aminofilina
+Loratadina
+Desloratadina
+Dicloridrato de Cetirizina
+Dicloridrato de Levocetirizina
+Cloridrato de Fexofenadina
+Cloridrato de Difenidramina
+Maleato de Clorfeniramina
+Cloridrato de Hidroxizina
+Cloridrato de Prometazina
+Epinefrina (Adrenalina)
+Hemitartarato de Norepinefrina
+Cloridrato de Dopamina
+Cloridrato de Dobutamina
+Vasopressina
+Sulfato de Atropina
+Cloridrato de Naloxona
+Flumazenil
+Sulfato de Protamina
+acido Tranexâmico
+acido Ascorbico (Vitamina C)
+Colecalciferol (Vitamina D3)
+Palmitato de Retinol (Vitamina A)
+Acetato de Tocoferol (Vitamina E)
+Fitomenadiona (Vitamina K1)
+Complexo B
+acido Folico (Vitamina B9)
+Sulfato Ferroso
+oxido de Zinco
+Citrato de Calcio
+Quelato de Magnesio
+Cloreto de Potassio
+Cloreto de Sodio
+Ringer Lactato
+Albumina Humana
+Imunoglobulina Humana
+Vacina Contra Influenza
+Vacina Contra Hepatite B
+Vacina Febre Amarela (Atenuada)
+Vacina Adsorvida Sarampo, Caxumba e Rubeola
+Vacina Papilomavirus Humano 6, 11, 16 e 18
+Ivermectina
+Albendazol
+Mebendazol
+Praziquantel
+Permetrina
+Cloridrato de Lidocaina
+Cloridrato de Bupivacaina
+Cloridrato de Ropivacaina
+Propofol
+Etomidato
+Cloridrato de Cetamina
+Tiopental Sodico
+Sevoflurano
+Isoflurano
+Desflurano
+oxido Nitroso
+Brometo de Rocurônio
+Brometo de Vecurônio
+Besilato de Atracurio
+Besilato de Cisatracurio
+Cloreto de Succinilcolina
+Metilsulfato de Neostigmina
+Bromidrato de Piridostigmina
+Cloridrato de Donepezila
+Tartarato de Rivastigmina
+Bromidrato de Galantamina
+Cloridrato de Memantina
+Succinato de Sumatriptana
+Benzoato de Rizatriptana
+Zolmitriptana
+Bromidrato de Eletriptana
+Tartarato de Ergotamina
+Cafeina Anidra
+Orlistate
+Cloridrato de Sibutramina
+Cloridrato de Metilfenidato
+Cloridrato de Atomoxetina
+Modafinila
+Baclofeno
+Cloridrato de Ciclobenzaprina
+Carisoprodol
+Metocarbamol
+Alopurinol
+Febuxostate
+Colchicina
+Probenecida
+Penicilamina
+Sulfato de Hidroxicloroquina
+Difosfato de Cloroquina
+Metotrexato
+Azatioprina
+Ciclosporina
+Tacrolimo Monoidratado
+Micofenolato de Mofetila
+Ciclofosfamida
+Ifosfamida
+Cloridrato de Doxorrubicina
+Cloridrato de Daunorrubicina
+Sulfato de Bleomicina
+Sulfato de Vincristina
+Sulfato de Vinblastina
+Paclitaxel
+Docetaxel
+Cisplatina
+Carboplatina
+Oxaliplatina
+Fluorouracil
+Capecitabina
+Cloridrato de Gemcitabina
+Mesilato de Imatinibe
+Cloridrato de Erlotinibe
+Gefitinibe
+Bevacizumabe
+Trastuzumabe
+Rituximabe
+Infliximabe
+Adalimumabe
+Etanercepte
+Golimumabe
+Certolizumabe Pegol
+Ustequinumabe
+Secuquinumabe
+Dupilumabe
+Omalizumabe
+Denosumabe
+Teriparatida
+Calcitonina Sintetica de Salmao
+Alendronato de Sodio
+Risedronato Sodico
+Ibandronato de Sodio
+acido Zoledrônico
+Misoprostol
+Ocitocina
+Dinoprostona
+Maleato de Metilergometrina
+acido Ursodesoxicolico
+Ursodiol
+Colestiramina
+Cloridrato de Colesevelam
+Cloridrato de Colestipol
+Pancreatina
+Simeticona
+Sacarato de Hidroxido de Ferro III
+Eritropoetina Humana Recombinante
+Filgrastim
+Pegfilgrastim
+Somatropina
+Acetato de Octreotida    
