@@ -5,9 +5,16 @@ import glob
 
 DOWNLOAD_PATH = os.path.join(os.path.expanduser("~"), "Downloads", "estudos", "tcc", "Bulário")
 REPORTS_PATH = os.path.join("C:\\", "workspace", "TCC", "Script Python", "Relatorio de erros")
-RETURN_BUTTON = (76, 68)
-NAME_LABEL = (421, 505)
-PDF_DOWNLOAD = (1384, 568)
+
+# # Notebook
+# RETURN_BUTTON = (76, 68)
+# NAME_LABEL = (421, 505)
+# PDF_DOWNLOAD = (1384, 568)
+
+# Monitor 
+RETURN_BUTTON = (60, 57)
+NAME_LABEL = (661, 442)
+PDF_DOWNLOAD = (1340, 493)
 
 
 def garantir_pasta(caminho):
