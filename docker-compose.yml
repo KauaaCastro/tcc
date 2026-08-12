@@ -1,6 +1,19 @@
 version: '3.8'
 
 services:
+  postgres-db:
+    image: pgvector/pgvector:pg16
+    container_name: medinteract-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: medinteract
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
     build:
       context: ./backend
@@ -10,8 +23,11 @@ services:
       - "5000:5000"
     environment:
       - PORT=5000
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgrespassword@postgres-db:5432/medinteract
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      - postgres-db
     restart: always
 
   frontend:
@@ -24,3 +40,6 @@ services:
     depends_on:
       - backend
     restart: always
+
+volumes:
+  postgres_data:

@@ -50,5 +50,6 @@ desktop.ini
 # ==========================================
 # 💻 ARQUIVOS DE SUPORTE
 # ==========================================
-.support/
-.GEMINI.md
+Support/
+support/
+GEMINI.md
