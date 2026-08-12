@@ -1,0 +1,9 @@
+// Mouse positions (notebook)
+RETURN_BUTTON = (x=76, y=68)
+NAME_LABEL = (x=421, y=505)
+PDF_DOWNLOAD = (x=1384, y=568)
+
+// Mouse positions (Monitor)
+RETURN_BUTTON = (60, 57)
+NAME_LABEL = (661, 442)
+PDF_DOWNLOAD = (1340, 493)

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedInteract — Plataforma Farmacológica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700&family=Lora:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Animated background -->
+  <div class="bg-mesh">
+    <div class="mesh-orb"></div>
+    <div class="mesh-orb"></div>
+    <div class="mesh-orb"></div>
+  </div>
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header class="header">
+    <!-- Logo -->
+    <div class="header-logo" onclick="location.reload()">
+      <div class="logo-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/><rect x="11" y="7" width="2" height="10" fill="rgba(255,255,255,0.6)"/><rect x="7" y="11" width="10" height="2" fill="rgba(255,255,255,0.6)"/></svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-name">MedInteract</span>
+        <span class="logo-badge">Plataforma Farmacológica</span>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="header-center">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" placeholder="Buscar conversas..." id="headerSearch">
+      </div>
+    </div>
+
+    <!-- Right -->
+    <div class="header-right">
+      <div class="header-tag">
+        <div class="live-dot"></div>
+        IA Ativa
+      </div>
+
+      <!-- User avatar + dropdown -->
+      <div class="user-menu-wrap">
+        <button class="user-avatar-btn" id="userAvatarBtn" aria-label="Menu do usuário">
+          <span class="user-initials" id="userInitials">Dr</span>
+        </button>
+
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dropdown-header">
+            <div class="dropdown-avatar"><span id="dropdownInitials">Dr</span></div>
+            <div class="dropdown-userinfo">
+              <div class="dropdown-name" id="dropdownName">Dr. Usuário</div>
+              <div class="dropdown-role">Farmacêutico Clínico</div>
+            </div>
+          </div>
+
+          <button class="dropdown-item" onclick="openProfile()">
+            <span class="item-icon">👤</span> Perfil
+          </button>
+          <button class="dropdown-item" onclick="openSettings()">
+            <span class="item-icon">⚙️</span> Configurações
+          </button>
+
+          <div class="dropdown-sep"></div>
+
+          <div class="toggle-row" onclick="toggleDarkMode()">
+            <span style="display:flex;align-items:center;gap:8px;">
+              <span class="item-icon" id="themeIcon">🌙</span>
+              <span style="font-size:13px;color:var(--text-secondary)">Modo Escuro</span>
+            </span>
+            <div class="toggle-switch on" id="themeToggle">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+
+          <div class="dropdown-sep"></div>
+
+          <button class="dropdown-item danger" onclick="logout()">
+            <span class="item-icon">🚪</span> Sair
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════ APP BODY ═══════════ -->
+  <div class="app-body">
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="sidebar">
+      <div class="sidebar-actions">
+        <button class="new-chat-btn" id="newChatBtn">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          Nova conversa
+        </button>
+      </div>
+
+      <div class="sidebar-search">
+        <div class="sidebar-searchbar">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" placeholder="Filtrar conversas..." id="convSearch">
+        </div>
+      </div>
+
+      <div class="conv-list" id="convList">
+        <div class="conv-section-label">Hoje</div>
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-footer-info">
+          <span class="footer-icon">⚕️</span>
+          <span class="footer-text">Uso educacional e profissional. Não substitui avaliação clínica individualizada.</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ═══ CHAT MAIN ═══ -->
+    <main class="chat-main">
+      <!-- Chat strip header -->
+      <div class="chat-header">
+        <div class="chat-title-group">
+          <div>
+            <div class="chat-title" id="chatTitle">Nova Conversa</div>
+            <div class="chat-subtitle" id="chatSubtitle">0 mensagens · MedInteract AI</div>
+          </div>
+        </div>
+        <div class="chat-actions">
+          <button class="icon-btn" title="Exportar" onclick="showToast('📄 Exportando conversa...')">📄</button>
+          <button class="icon-btn" title="Limpar chat" onclick="clearChat()">🗑️</button>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages-container" id="messagesContainer">
+        <!-- Welcome screen -->
+        <div class="welcome-screen" id="welcomeScreen">
+          <div class="welcome-logo-large">
+            <svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/><rect x="11" y="7" width="2" height="10" fill="rgba(255,255,255,0.6)"/><rect x="7" y="11" width="10" height="2" fill="rgba(255,255,255,0.6)"/></svg>
+          </div>
+          <h1 class="welcome-headline">
+            Bem-vindo ao <strong>MedInteract</strong>
+          </h1>
+          <p class="welcome-desc">
+            Plataforma especializada em análise de interações medicamentosas com inteligência artificial. Consulte combinações, mecanismos farmacológicos e condutas clínicas.
+          </p>
+          <div class="welcome-grid">
+            <div class="welcome-card" onclick="sendQuick('Paracetamol e álcool: quais os riscos hepáticos e qual a dose segura?')">
+              <div class="wc-icon">⚗️</div>
+              <div class="wc-text">
+                <div class="wc-title">Paracetamol + Álcool</div>
+                <div class="wc-desc">Riscos hepáticos e doses seguras</div>
+              </div>
+            </div>
+            <div class="welcome-card" onclick="sendQuick('Explique a síndrome serotoninérgica: causas, sintomas e quais medicamentos envolvem')">
+              <div class="wc-icon">🧠</div>
+              <div class="wc-text">
+                <div class="wc-title">Síndrome Serotoninérgica</div>
+                <div class="wc-desc">Causas, sintomas e prevenção</div>
+              </div>
+            </div>
+            <div class="welcome-card" onclick="sendQuick('Como o sistema CYP450 afeta o metabolismo de medicamentos? Dê exemplos de indutores e inibidores')">
+              <div class="wc-icon">🔬</div>
+              <div class="wc-text">
+                <div class="wc-title">CYP450 e Metabolismo</div>
+                <div class="wc-desc">Indutores, inibidores e substratos</div>
+              </div>
+            </div>
+            <div class="welcome-card" onclick="sendQuick('Warfarina tem muitas interações medicamentosas. Liste as principais e explique os mecanismos')">
+              <div class="wc-icon">🩸</div>
+              <div class="wc-text">
+                <div class="wc-title">Warfarina — Interações</div>
+                <div class="wc-desc">Principais interações e mecanismos</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input area -->
+      <div class="input-zone">
+        <div class="input-wrapper">
+          <div class="input-frame">
+            <textarea
+              id="chatInput"
+              placeholder="Consulte medicamentos, interações ou mecanismos farmacológicos..."
+              rows="1"
+              maxlength="800"
+              aria-label="Campo de mensagem"
+            ></textarea>
+            <div class="input-actions">
+              <button class="input-icon-btn" title="Limpar" onclick="clearInput()">✕</button>
+              <button class="send-btn" id="sendBtn" aria-label="Enviar" title="Enviar mensagem">
+                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="input-meta">
+            <div class="input-hint">
+              <span class="key-badge">Enter</span> enviar
+              <span style="color:var(--border-strong)">·</span>
+              <span class="key-badge">Shift+Enter</span> nova linha
+            </div>
+            <span class="char-count" id="charCount">0 / 800</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- App logic -->
+  <script src="js/app.js" defer></script>
+</body>
+</html>

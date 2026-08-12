@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedInteract — Plataforma Farmacológica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700&family=Lora:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════ */
+:root {
+  /* Green accent — subtle only */
+  --green-400: #4ade80;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+
+  /* Dark theme — neutral charcoal base, green as accent only */
+  --bg-base:     #0e0f11;
+  --bg-surface:  #141618;
+  --bg-elevated: #1a1c1f;
+  --bg-overlay:  #1f2125;
+  --bg-input:    #18191c;
+
+  --border-subtle:  rgba(255,255,255,0.04);
+  --border-default: rgba(255,255,255,0.08);
+  --border-strong:  rgba(255,255,255,0.14);
+
+  --text-primary:   #f1f3f5;
+  --text-secondary: #8b929e;
+  --text-muted:     #4b5260;
+  --text-accent:    #4ade80;
+
+  --accent:       #22c55e;
+  --accent-light: #4ade80;
+  --accent-glow:  rgba(34,197,94,0.15);
+  --accent-glow2: rgba(34,197,94,0.06);
+
+  --danger:  #f87171;
+  --warning: #fbbf24;
+  --success: #34d399;
+  --info:    #38bdf8;
+
+  --sidebar-w: 280px;
+  --header-h:  60px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.5), 0 0 0 1px var(--border-subtle);
+  --shadow-md:  0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px var(--border-subtle);
+  --shadow-glow: 0 0 24px var(--accent-glow);
+
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --spring:     0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+[data-theme="light"] {
+  --bg-base:     #f7f8fa;
+  --bg-surface:  #ffffff;
+  --bg-elevated: #f2f4f7;
+  --bg-overlay:  #eceef2;
+  --bg-input:    #f4f5f8;
+
+  --border-subtle:  rgba(0,0,0,0.05);
+  --border-default: rgba(0,0,0,0.09);
+  --border-strong:  rgba(0,0,0,0.16);
+
+  --text-primary:   #111215;
+  --text-secondary: #52576a;
+  --text-muted:     #9ba3b5;
+  --text-accent:    #16a34a;
+
+  --accent:       #16a34a;
+  --accent-light: #22c55e;
+  --accent-glow:  rgba(22,163,74,0.12);
+  --accent-glow2: rgba(22,163,74,0.05);
+
+  --danger:  #dc2626;
+  --warning: #d97706;
+  --success: #059669;
+  --info:    #0284c7;
+
+  --shadow-sm:  0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px var(--border-subtle);
+  --shadow-md:  0 4px 20px rgba(0,0,0,0.09), 0 0 0 1px var(--border-subtle);
+  --shadow-glow: 0 0 24px var(--accent-glow);
+}
+
+/* ═══════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: background var(--transition), color var(--transition);
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ═══════════════════════════════════════════
+   ANIMATED BACKGROUND
+═══════════════════════════════════════════ */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+[data-theme="light"] #bg-canvas { opacity: 0.25; }
+
+.bg-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.mesh-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  animation: orbDrift 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.mesh-orb:nth-child(1) {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(34,197,94,0.05) 0%, transparent 70%);
+  top: -200px; left: -150px;
+  animation-duration: 20s;
+}
+
+.mesh-orb:nth-child(2) {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(34,197,94,0.03) 0%, transparent 70%);
+  bottom: -150px; right: -100px;
+  animation-duration: 25s;
+  animation-delay: -8s;
+}
+
+.mesh-orb:nth-child(3) {
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, rgba(34,197,94,0.025) 0%, transparent 70%);
+  top: 40%; left: 55%;
+  animation-duration: 16s;
+  animation-delay: -4s;
+}
+
+@keyframes orbDrift {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(40px, 30px) scale(1.08); }
+  66%  { transform: translate(-20px, 50px) scale(0.95); }
+  100% { transform: translate(30px, -20px) scale(1.05); }
+}
+
+/* ═══════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════ */
+.header {
+  position: relative;
+  z-index: 100;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 0 0;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  flex-shrink: 0;
+}
+
+/* Logo area — same width as sidebar */
+.header-logo {
+  width: var(--sidebar-w);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-right: 1px solid var(--border-default);
+  flex-shrink: 0;
+  gap: 10px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.header-logo:hover { background: var(--accent-glow2); }
+
+.logo-icon-wrap {
+  width: 34px; height: 34px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #1a1c1f, #252830);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 1px rgba(74,222,128,0.15), 0 0 16px rgba(34,197,94,0.12);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-icon-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 60%);
+}
+
+.logo-icon-wrap svg {
+  width: 18px; height: 18px;
+  fill: #fff;
+  position: relative; z-index: 1;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.logo-name {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--accent-light);
+  text-shadow: none;
+}
+
+[data-theme="light"] .logo-name {
+  color: var(--accent);
+  text-shadow: none;
+}
+
+.logo-badge {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Header center: search */
+.header-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 7px 14px;
+  width: 300px;
+  transition: all var(--transition);
+  cursor: text;
+}
+
+.search-bar:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px var(--accent-glow2);
+  width: 360px;
+}
+
+.search-bar svg { width: 14px; height: 14px; fill: var(--text-muted); flex-shrink: 0; }
+
+.search-bar input {
+  background: none;
+  border: none;
+  outline: none;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.search-bar input::placeholder { color: var(--text-muted); }
+
+/* Header right: user */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--accent-glow2);
+  border: 1px solid var(--border-default);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-accent);
+  letter-spacing: 0.3px;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: livePulse 2.5s infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52,211,153,0.4); }
+  50%       { opacity: 0.7; box-shadow: 0 0 0 5px rgba(52,211,153,0); }
+}
+
+/* USER MENU */
+.user-menu-wrap {
+  position: relative;
+}
+
+.user-avatar-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: linear-gradient(135deg, #1f2125, #2a2d33); border: 1px solid var(--border-default);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  transition: all var(--transition);
+  position: relative;
+}
+
+.user-avatar-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow2), var(--shadow-glow);
+  transform: scale(1.05);
+}
+
+.user-avatar-btn img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.user-initials {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 220px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), 0 20px 60px rgba(0,0,0,0.4);
+  overflow: hidden;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.96);
+  transform-origin: top right;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.user-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.dropdown-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dropdown-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1f2125, #2a2d33); border: 1px solid var(--border-default);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.dropdown-avatar span { font-size: 14px; font-weight: 700; color: #fff; }
+
+.dropdown-userinfo { flex: 1; min-width: 0; }
+.dropdown-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dropdown-role { font-size: 10px; color: var(--text-accent); font-weight: 500; margin-top: 1px; letter-spacing: 0.5px; }
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background var(--transition);
+  font-size: 13px;
+  color: var(--text-secondary);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: 'Bricolage Grotesque', sans-serif;
+}
+
+.dropdown-item:hover { background: var(--accent-glow2); color: var(--text-primary); }
+.dropdown-item:hover .item-icon { color: var(--accent); }
+
+.item-icon { width: 16px; text-align: center; font-size: 14px; color: var(--text-muted); transition: color var(--transition); }
+
+.dropdown-sep { height: 1px; background: var(--border-default); margin: 4px 0; }
+
+.dropdown-item.danger { color: var(--danger); }
+.dropdown-item.danger:hover { background: rgba(248,113,113,0.08); }
+.dropdown-item.danger .item-icon { color: var(--danger); }
+
+/* Dark mode toggle in dropdown */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background var(--transition);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.toggle-row:hover { background: var(--accent-glow2); }
+
+.toggle-switch {
+  width: 36px; height: 20px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  position: relative;
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+
+.toggle-switch.on { background: var(--accent); border-color: var(--accent); }
+
+.toggle-knob {
+  width: 14px; height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px; left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.toggle-switch.on .toggle-knob { transform: translateX(16px); }
+
+/* ═══════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════ */
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background var(--transition);
+}
+
+.sidebar-actions {
+  padding: 14px 14px 10px;
+  flex-shrink: 0;
+}
+
+.new-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  letter-spacing: 0.2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.new-chat-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: none;
+}
+
+.new-chat-btn:hover {
+  background: var(--bg-overlay);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.new-chat-btn:active { transform: translateY(0); }
+
+.new-chat-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+/* Sidebar search */
+.sidebar-search {
+  padding: 6px 14px 10px;
+  flex-shrink: 0;
+}
+
+.sidebar-searchbar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  transition: all var(--transition);
+}
+
+.sidebar-searchbar:focus-within {
+  border-color: var(--border-strong);
+}
+
+.sidebar-searchbar svg { width: 13px; height: 13px; fill: var(--text-muted); flex-shrink: 0; }
+.sidebar-searchbar input {
+  background: none; border: none; outline: none;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 12px; color: var(--text-primary); width: 100%;
+}
+.sidebar-searchbar input::placeholder { color: var(--text-muted); }
+
+/* Conversation list */
+.conv-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px;
+}
+
+.conv-section-label {
+  padding: 10px 8px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.conv-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  border: 1px solid transparent;
+  margin-bottom: 2px;
+}
+
+.conv-item:hover {
+  background: var(--accent-glow2);
+  border-color: var(--border-subtle);
+}
+
+.conv-item.active {
+  background: var(--accent-glow2);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-sm);
+}
+
+.conv-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 20%; bottom: 20%;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 0 3px 3px 0;
+}
+
+.conv-icon {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-glow2);
+  border: 1px solid var(--border-default);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.conv-item.active .conv-icon {
+  background: var(--accent-glow);
+  border-color: var(--border-strong);
+}
+
+.conv-info { flex: 1; min-width: 0; }
+
+.conv-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.conv-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.conv-date {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.conv-count {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--accent-glow2);
+  color: var(--text-accent);
+  border: 1px solid var(--border-subtle);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.conv-options {
+  width: 22px; height: 22px;
+  border-radius: 4px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: all var(--transition);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.conv-item:hover .conv-options { opacity: 1; }
+.conv-options:hover { background: var(--border-default); color: var(--text-primary); }
+
+/* Sidebar footer */
+.sidebar-footer {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-default);
+  flex-shrink: 0;
+}
+
+.sidebar-footer-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-subtle);
+}
+
+.footer-icon { font-size: 14px; }
+
+.footer-text {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════
+   MAIN CHAT
+═══════════════════════════════════════════ */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Chat header strip */
+.chat-header {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+  flex-shrink: 0;
+}
+
+.chat-title-group { display: flex; align-items: center; gap: 10px; }
+
+.chat-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+
+.chat-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.chat-actions { display: flex; gap: 6px; }
+
+.icon-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+  font-size: 14px;
+}
+
+.icon-btn:hover {
+  background: var(--accent-glow2);
+  border-color: var(--border-strong);
+  color: var(--accent);
+}
+
+/* ═══════════════════════════════════════════
+   MESSAGES
+═══════════════════════════════════════════ */
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  scroll-behavior: smooth;
+}
+
+/* Welcome screen */
+.welcome-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 40px 24px;
+  gap: 0;
+  animation: welcomeIn 0.5s ease both;
+}
+
+@keyframes welcomeIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.welcome-logo-large {
+  width: 72px; height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #1f2125, #2a2d33); border: 1px solid var(--border-default);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset, 0 20px 60px var(--accent-glow), 0 0 0 8px var(--accent-glow2);
+  margin-bottom: 24px;
+  animation: floatLogo 5s ease-in-out infinite;
+}
+
+@keyframes floatLogo {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33%       { transform: translateY(-6px) rotate(1deg); }
+  66%       { transform: translateY(-3px) rotate(-1deg); }
+}
+
+.welcome-logo-large svg { width: 36px; height: 36px; fill: #fff; }
+
+.welcome-headline {
+  font-family: 'Lora', serif;
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.2;
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+
+.welcome-headline strong {
+  color: var(--accent-light);
+  font-weight: 600;
+}
+
+.welcome-desc {
+  font-size: 15px;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 480px;
+  line-height: 1.65;
+  margin-bottom: 36px;
+  font-weight: 300;
+}
+
+.welcome-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  max-width: 560px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.welcome-card {
+  padding: 16px 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+}
+
+.welcome-card:hover {
+  background: var(--accent-glow2);
+  border-color: var(--border-strong);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px var(--accent-glow);
+}
+
+.wc-icon {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-glow2);
+  border: 1px solid var(--border-default);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.wc-text { flex: 1; }
+.wc-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+.wc-desc  { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+
+/* Message group */
+.msg-group {
+  padding: 8px 24px;
+  display: flex;
+  gap: 14px;
+  animation: msgIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.msg-group.user { flex-direction: row-reverse; }
+
+.msg-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-elevated);
+  margin-top: 2px;
+}
+
+.msg-avatar.ai-av {
+  background: linear-gradient(135deg, #1f2125, #2a2d33); border: 1px solid var(--border-default);
+  border-color: transparent;
+  box-shadow: 0 0 12px rgba(34,197,94,0.18);
+}
+
+.msg-avatar.ai-av svg { width: 16px; height: 16px; fill: #fff; }
+
+.msg-body { flex: 1; min-width: 0; }
+
+.msg-sender {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.msg-group.user .msg-sender { text-align: right; justify-content: flex-end; }
+
+.sender-badge {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent-glow2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-accent);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+.msg-bubble {
+  display: inline-block;
+  max-width: 100%;
+  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  line-height: 1.72;
+  color: var(--text-primary);
+  position: relative;
+}
+
+.msg-group.ai .msg-bubble {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-top-left-radius: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+.msg-group.user .msg-bubble {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-top-right-radius: 4px;
+  border-right: 2px solid var(--accent);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  max-width: 540px;
+}
+
+.msg-group.user { justify-content: flex-end; }
+
+/* AI response formatting */
+.msg-bubble h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-light);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.msg-bubble p { margin-bottom: 8px; color: var(--text-secondary); }
+.msg-bubble p:last-child { margin-bottom: 0; }
+.msg-bubble strong { color: var(--text-primary); font-weight: 600; }
+
+.msg-bubble ul {
+  padding-left: 0;
+  margin: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.msg-bubble ul li {
+  list-style: none;
+  padding: 5px 10px;
+  background: var(--bg-overlay);
+  border-left: 2px solid var(--border-strong);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Risk levels */
+.risk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  vertical-align: middle;
+}
+
+.risk-chip.alto     { background: rgba(248,113,113,0.12); color: var(--danger);  border: 1px solid rgba(248,113,113,0.25); }
+.risk-chip.moderado { background: rgba(251,191,36,0.12);  color: var(--warning); border: 1px solid rgba(251,191,36,0.25); }
+.risk-chip.baixo    { background: rgba(52,211,153,0.12);  color: var(--success); border: 1px solid rgba(52,211,153,0.25); }
+
+.drug-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-glow2);
+  border: 1px solid var(--border-default);
+  color: var(--text-accent);
+  white-space: nowrap;
+}
+
+.msg-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.3px;
+}
+
+.msg-group.user .msg-time { text-align: right; }
+
+/* TYPING */
+.typing-group {
+  padding: 8px 24px;
+  display: flex;
+  gap: 14px;
+  animation: msgIn 0.3s ease both;
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.typing-bubble {
+  padding: 14px 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  border-top-left-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.typing-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: 'Lora', serif;
+  font-style: italic;
+}
+
+.t-dots { display: flex; gap: 4px; }
+
+.td {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  animation: tdBounce 1.4s ease infinite;
+}
+
+.td:nth-child(1) { background: var(--accent); animation-delay: 0s; }
+.td:nth-child(2) { background: var(--info);   animation-delay: 0.18s; }
+.td:nth-child(3) { background: var(--success); animation-delay: 0.36s; }
+
+@keyframes tdBounce {
+  0%, 60%, 100% { transform: translateY(0);   opacity: 0.3; }
+  30%            { transform: translateY(-5px); opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════
+   INPUT AREA
+═══════════════════════════════════════════ */
+.input-zone {
+  padding: 16px 24px 20px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
+  flex-shrink: 0;
+}
+
+.input-wrapper {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.input-frame {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: 10px 12px 10px 20px;
+  transition: all var(--transition);
+}
+
+.input-frame:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-glow2);
+}
+
+#chatInput {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  resize: none;
+  max-height: 140px;
+  min-height: 28px;
+  line-height: 1.6;
+  padding: 5px 0;
+}
+
+#chatInput::placeholder { color: var(--text-muted); }
+
+.input-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+.input-icon-btn {
+  width: 34px; height: 34px;
+  border-radius: var(--radius-md);
+  background: none;
+  border: 1px solid var(--border-default);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+  font-size: 15px;
+}
+
+.input-icon-btn:hover {
+  background: var(--accent-glow2);
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.send-btn {
+  width: 38px; height: 38px;
+  border-radius: var(--radius-md);
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.send-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.06);
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.send-btn:active { transform: scale(0.96); }
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.send-btn svg { width: 17px; height: 17px; fill: var(--text-secondary); transition: fill var(--transition); }
+.send-btn:hover svg { fill: #fff; }
+
+.input-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.input-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.key-badge {
+  padding: 1px 5px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.char-count {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up { animation: fadeUp 0.4s ease both; }
+
+/* Notification toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 10px 18px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-md);
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+</style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-mesh">
+  <div class="mesh-orb"></div>
+  <div class="mesh-orb"></div>
+  <div class="mesh-orb"></div>
+</div>
+<canvas id="bg-canvas"></canvas>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="header">
+  <!-- Logo -->
+  <div class="header-logo">
+    <div class="logo-icon-wrap">
+      <svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/><rect x="11" y="7" width="2" height="10" fill="rgba(255,255,255,0.6)"/><rect x="7" y="11" width="10" height="2" fill="rgba(255,255,255,0.6)"/></svg>
+    </div>
+    <div class="logo-text">
+      <span class="logo-name">MedInteract</span>
+      <span class="logo-badge">Plataforma Farmacológica</span>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="header-center">
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <input type="text" placeholder="Buscar conversas..." id="headerSearch">
+    </div>
+  </div>
+
+  <!-- Right -->
+  <div class="header-right">
+    <div class="header-tag">
+      <div class="live-dot"></div>
+      IA Ativa
+    </div>
+
+    <!-- User avatar + dropdown -->
+    <div class="user-menu-wrap">
+      <button class="user-avatar-btn" id="userAvatarBtn" aria-label="Menu do usuário">
+        <span class="user-initials" id="userInitials">Dr</span>
+      </button>
+
+      <div class="user-dropdown" id="userDropdown">
+        <div class="dropdown-header">
+          <div class="dropdown-avatar"><span id="dropdownInitials">Dr</span></div>
+          <div class="dropdown-userinfo">
+            <div class="dropdown-name" id="dropdownName">Dr. Usuário</div>
+            <div class="dropdown-role">Farmacêutico Clínico</div>
+          </div>
+        </div>
+
+        <button class="dropdown-item" onclick="openProfile()">
+          <span class="item-icon">👤</span> Perfil
+        </button>
+        <button class="dropdown-item" onclick="openSettings()">
+          <span class="item-icon">⚙️</span> Configurações
+        </button>
+
+        <div class="dropdown-sep"></div>
+
+        <div class="toggle-row" onclick="toggleDarkMode()">
+          <span style="display:flex;align-items:center;gap:8px;">
+            <span class="item-icon" id="themeIcon">🌙</span>
+            <span style="font-size:13px;color:var(--text-secondary)">Modo Escuro</span>
+          </span>
+          <div class="toggle-switch on" id="themeToggle">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
+        <div class="dropdown-sep"></div>
+
+        <button class="dropdown-item danger" onclick="logout()">
+          <span class="item-icon">🚪</span> Sair
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════ APP BODY ═══════════ -->
+<div class="app-body">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+
+    <div class="sidebar-actions">
+      <button class="new-chat-btn" id="newChatBtn">
+        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        Nova conversa
+      </button>
+    </div>
+
+    <div class="sidebar-search">
+      <div class="sidebar-searchbar">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" placeholder="Filtrar conversas..." id="convSearch">
+      </div>
+    </div>
+
+    <div class="conv-list" id="convList">
+      <div class="conv-section-label">Hoje</div>
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-info">
+        <span class="footer-icon">⚕️</span>
+        <span class="footer-text">Uso educacional e profissional. Não substitui avaliação clínica individualizada.</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ CHAT MAIN ═══ -->
+  <main class="chat-main">
+
+    <!-- Chat strip header -->
+    <div class="chat-header">
+      <div class="chat-title-group">
+        <div>
+          <div class="chat-title" id="chatTitle">Nova Conversa</div>
+          <div class="chat-subtitle" id="chatSubtitle">0 mensagens · MedInteract AI</div>
+        </div>
+      </div>
+      <div class="chat-actions">
+        <button class="icon-btn" title="Exportar" onclick="showToast('📄 Exportando conversa...')">📄</button>
+        <button class="icon-btn" title="Limpar chat" onclick="clearChat()">🗑️</button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="messages-container" id="messagesContainer">
+
+      <!-- Welcome screen -->
+      <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-logo-large">
+          <svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/><rect x="11" y="7" width="2" height="10" fill="rgba(255,255,255,0.6)"/><rect x="7" y="11" width="10" height="2" fill="rgba(255,255,255,0.6)"/></svg>
+        </div>
+        <h1 class="welcome-headline">
+          Bem-vindo ao <strong>MedInteract</strong>
+        </h1>
+        <p class="welcome-desc">
+          Plataforma especializada em análise de interações medicamentosas com inteligência artificial. Consulte combinações, mecanismos farmacológicos e condutas clínicas.
+        </p>
+        <div class="welcome-grid">
+          <div class="welcome-card" onclick="sendQuick('Paracetamol e álcool: quais os riscos hepáticos e qual a dose segura?')">
+            <div class="wc-icon">⚗️</div>
+            <div class="wc-text">
+              <div class="wc-title">Paracetamol + Álcool</div>
+              <div class="wc-desc">Riscos hepáticos e doses seguras</div>
+            </div>
+          </div>
+          <div class="welcome-card" onclick="sendQuick('Explique a síndrome serotoninérgica: causas, sintomas e quais medicamentos envolvem')">
+            <div class="wc-icon">🧠</div>
+            <div class="wc-text">
+              <div class="wc-title">Síndrome Serotoninérgica</div>
+              <div class="wc-desc">Causas, sintomas e prevenção</div>
+            </div>
+          </div>
+          <div class="welcome-card" onclick="sendQuick('Como o sistema CYP450 afeta o metabolismo de medicamentos? Dê exemplos de indutores e inibidores')">
+            <div class="wc-icon">🔬</div>
+            <div class="wc-text">
+              <div class="wc-title">CYP450 e Metabolismo</div>
+              <div class="wc-desc">Indutores, inibidores e substratos</div>
+            </div>
+          </div>
+          <div class="welcome-card" onclick="sendQuick('Warfarina tem muitas interações medicamentosas. Liste as principais e explique os mecanismos')">
+            <div class="wc-icon">🩸</div>
+            <div class="wc-text">
+              <div class="wc-title">Warfarina — Interações</div>
+              <div class="wc-desc">Principais interações e mecanismos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="input-zone">
+      <div class="input-wrapper">
+        <div class="input-frame">
+          <textarea
+            id="chatInput"
+            placeholder="Consulte medicamentos, interações ou mecanismos farmacológicos..."
+            rows="1"
+            maxlength="800"
+            aria-label="Campo de mensagem"
+          ></textarea>
+          <div class="input-actions">
+            <button class="input-icon-btn" title="Limpar" onclick="clearInput()">✕</button>
+            <button class="send-btn" id="sendBtn" aria-label="Enviar" title="Enviar mensagem">
+              <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="input-meta">
+          <div class="input-hint">
+            <span class="key-badge">Enter</span> enviar
+            <span style="color:var(--border-strong)">·</span>
+            <span class="key-badge">Shift+Enter</span> nova linha
+          </div>
+          <span class="char-count" id="charCount">0 / 800</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────
+   CONFIG — Adapte para integração com seu backend
+────────────────────────────────────────────── */
+const CONFIG = {
+  // ── Troque pela URL do seu backend ──
+  API_BASE_URL: "https://api.anthropic.com/v1/messages",
+
+  // ── Modelo usado (troque se seu backend usa outro) ──
+  MODEL: "claude-sonnet-4-20250514",
+  MAX_TOKENS: 1200,
+
+  // ── System prompt: defina o comportamento da IA ──
+  SYSTEM_PROMPT: `Você é MedInteract AI, um assistente especializado em farmacologia clínica e interações medicamentosas para uso profissional farmacêutico.
+
+Responda SEMPRE em português brasileiro, de forma técnica, precisa e didática.
+
+Estrutura de resposta para análise de interações:
+1. **Nível de risco**: ALTO (contraindicado/evitar), MODERADO (usar com cautela), BAIXO (monitorar), SEM INTERAÇÃO SIGNIFICATIVA
+2. **Mecanismo**: farmacocinético (absorção, distribuição, metabolismo, excreção) ou farmacodinâmico (efeito aditivo, sinérgico, antagônico)
+3. **Efeitos clínicos**: consequências práticas da interação
+4. **Conduta**: o que o profissional deve fazer (evitar, ajustar dose, monitorar parâmetros, espaçar horários)
+5. **Populações especiais**: idosos, gestantes, renais, hepáticos quando relevante
+
+Para perguntas conceituais, seja didático com exemplos clínicos concretos.
+Mantenha precisão científica sem jargões desnecessários.
+
+IMPORTANTE: Sempre reforce que as informações são de suporte à decisão clínica e não substituem avaliação individualizada.`,
+
+  // ── Dados do usuário (virá do seu backend/auth) ──
+  USER: {
+    name: "Dr. Usuário",
+    initials: "Dr",
+    role: "Farmacêutico Clínico",
+  }
+};
+
+/* ─────────────────────────────────────────────
+   STATE
+────────────────────────────────────────────── */
+let state = {
+  conversations: [],   // Array de { id, title, messages, date, count }
+  activeConvId: null,
+  isLoading: false,
+  isDark: true,
+  messageCount: 0,
+};
+
+/* ─────────────────────────────────────────────
+   API ADAPTER — Fácil integração com seu backend
+   
+   Para integrar SEU backend, edite apenas a função
+   `callAI()` abaixo. O restante do app permanece igual.
+────────────────────────────────────────────── */
+async function callAI(messages) {
+  /**
+   * INTEGRAÇÃO COM SEU BACKEND:
+   * ────────────────────────────
+   * Opção 1 — Backend próprio (REST):
+   *   const res = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
+   *     method: 'POST',
+   *     headers: {
+   *       'Content-Type': 'application/json',
+   *       'Authorization': `Bearer ${getToken()}`,  // auth do seu sistema
+   *     },
+   *     body: JSON.stringify({ messages, model: CONFIG.MODEL })
+   *   });
+   *   const data = await res.json();
+   *   return data.response; // ajuste ao formato da sua API
+   *
+   * Opção 2 — Anthropic direto (desenvolvimento):
+   *   Mantém o código abaixo sem alteração.
+   *
+   * Opção 3 — Streaming (mais responsivo):
+   *   Use ReadableStream para exibir tokens em tempo real.
+   *   Veja: https://docs.anthropic.com/streaming
+   */
+
+  // ── Anthropic direto (padrão para desenvolvimento) ──
+  const response = await fetch(CONFIG.API_BASE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: CONFIG.MODEL,
+      max_tokens: CONFIG.MAX_TOKENS,
+      system: CONFIG.SYSTEM_PROMPT,
+      messages: messages.map(m => ({ role: m.role, content: m.content }))
+    })
+  });
+
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+  const data = await response.json();
+  return data?.content?.[0]?.text || 'Sem resposta do servidor.';
+}
+
+/* ─────────────────────────────────────────────
+   CONVERSATION MANAGEMENT
+────────────────────────────────────────────── */
+function createConversation(firstMessage = null) {
+  const id = 'conv_' + Date.now();
+  const conv = {
+    id,
+    title: firstMessage ? summarizeTitle(firstMessage) : 'Nova Conversa',
+    messages: [],
+    date: new Date(),
+    icon: getRandomIcon(),
+  };
+  state.conversations.unshift(conv);
+  state.activeConvId = id;
+  renderSidebar();
+  return conv;
+}
+
+function getActiveConv() {
+  return state.conversations.find(c => c.id === state.activeConvId) || null;
+}
+
+function summarizeTitle(text) {
+  const clean = text.trim();
+  if (clean.length <= 38) return clean;
+  return clean.substring(0, 36) + '…';
+}
+
+function getRandomIcon() {
+  const icons = ['💊', '⚗️', '🔬', '🧬', '🩺', '🧪', '📋', '🩸'];
+  return icons[Math.floor(Math.random() * icons.length)];
+}
+
+function selectConversation(id) {
+  state.activeConvId = id;
+  renderSidebar();
+  renderMessages();
+  const conv = getActiveConv();
+  updateChatHeader(conv);
+}
+
+function updateChatHeader(conv) {
+  const title = conv ? conv.title : 'Nova Conversa';
+  const count = conv ? conv.messages.filter(m => m.role === 'user').length : 0;
+  document.getElementById('chatTitle').textContent = title;
+  document.getElementById('chatSubtitle').textContent = `${count} consulta${count !== 1 ? 's' : ''} · MedInteract AI`;
+}
+
+/* ─────────────────────────────────────────────
+   RENDER SIDEBAR
+────────────────────────────────────────────── */
+function renderSidebar() {
+  const list = document.getElementById('convList');
+  list.innerHTML = '';
+
+  if (state.conversations.length === 0) {
+    list.innerHTML = `<div style="padding:20px 14px;text-align:center;color:var(--text-muted);font-size:12px;">Nenhuma conversa ainda.<br>Inicie uma nova consulta.</div>`;
+    return;
+  }
+
+  // Group by date
+  const today = new Date();
+  const groups = { today: [], yesterday: [], older: [] };
+
+  state.conversations.forEach(conv => {
+    const d = new Date(conv.date);
+    const diffDays = Math.floor((today - d) / 86400000);
+    if (diffDays === 0) groups.today.push(conv);
+    else if (diffDays === 1) groups.yesterday.push(conv);
+    else groups.older.push(conv);
+  });
+
+  const render = (label, items) => {
+    if (!items.length) return;
+    const sec = document.createElement('div');
+    sec.className = 'conv-section-label';
+    sec.textContent = label;
+    list.appendChild(sec);
+
+    items.forEach(conv => {
+      const el = document.createElement('div');
+      el.className = `conv-item ${conv.id === state.activeConvId ? 'active' : ''}`;
+      el.setAttribute('data-id', conv.id);
+
+      const msgCount = conv.messages.filter(m => m.role === 'user').length;
+      const timeStr = new Date(conv.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      el.innerHTML = `
+        <div class="conv-icon">${conv.icon}</div>
+        <div class="conv-info">
+          <div class="conv-title">${escHtml(conv.title)}</div>
+          <div class="conv-meta">
+            <span class="conv-date">${timeStr}</span>
+            ${msgCount > 0 ? `<span class="conv-count">${msgCount} msg</span>` : ''}
+          </div>
+        </div>
+        <button class="conv-options" title="Opções" onclick="event.stopPropagation();deleteConv('${conv.id}')">✕</button>
+      `;
+      el.addEventListener('click', () => selectConversation(conv.id));
+      list.appendChild(el);
+    });
+  };
+
+  render('Hoje', groups.today);
+  render('Ontem', groups.yesterday);
+  render('Anteriores', groups.older);
+}
+
+function deleteConv(id) {
+  state.conversations = state.conversations.filter(c => c.id !== id);
+  if (state.activeConvId === id) {
+    state.activeConvId = null;
+    showWelcome();
+    updateChatHeader(null);
+  }
+  renderSidebar();
+  showToast('🗑️ Conversa removida');
+}
+
+/* ─────────────────────────────────────────────
+   RENDER MESSAGES
+────────────────────────────────────────────── */
+function showWelcome() {
+  const container = document.getElementById('messagesContainer');
+  container.innerHTML = document.getElementById('welcomeScreen')?.outerHTML || '';
+  // Re-attach welcome screen
+  const ws = createWelcomeScreen();
+  container.innerHTML = '';
+  container.appendChild(ws);
+}
+
+function createWelcomeScreen() {
+  const div = document.createElement('div');
+  div.className = 'welcome-screen';
+  div.id = 'welcomeScreen';
+  div.innerHTML = `
+    <div class="welcome-logo-large">
+      <svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/><rect x="11" y="7" width="2" height="10" fill="rgba(255,255,255,0.6)"/><rect x="7" y="11" width="10" height="2" fill="rgba(255,255,255,0.6)"/></svg>
+    </div>
+    <h1 class="welcome-headline">Bem-vindo ao <strong>MedInteract</strong></h1>
+    <p class="welcome-desc">Plataforma especializada em análise de interações medicamentosas com inteligência artificial. Consulte combinações, mecanismos farmacológicos e condutas clínicas.</p>
+    <div class="welcome-grid">
+      ${[
+        ['⚗️','Paracetamol + Álcool','Riscos hepáticos e doses seguras','Paracetamol e álcool: quais os riscos hepáticos e qual a dose segura?'],
+        ['🧠','Síndrome Serotoninérgica','Causas, sintomas e prevenção','Explique a síndrome serotoninérgica: causas, sintomas e quais medicamentos envolvem'],
+        ['🔬','CYP450 e Metabolismo','Indutores, inibidores e substratos','Como o sistema CYP450 afeta o metabolismo de medicamentos? Dê exemplos de indutores e inibidores'],
+        ['🩸','Warfarina — Interações','Principais interações e mecanismos','Warfarina tem muitas interações medicamentosas. Liste as principais e explique os mecanismos'],
+      ].map(([icon,title,desc,q]) => `
+        <div class="welcome-card" onclick="sendQuick(${JSON.stringify(q)})">
+          <div class="wc-icon">${icon}</div>
+          <div class="wc-text">
+            <div class="wc-title">${title}</div>
+            <div class="wc-desc">${desc}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  return div;
+}
+
+function renderMessages() {
+  const container = document.getElementById('messagesContainer');
+  const conv = getActiveConv();
+
+  if (!conv || conv.messages.length === 0) {
+    showWelcome();
+    return;
+  }
+
+  container.innerHTML = '';
+
+  conv.messages.forEach(msg => {
+    container.appendChild(createMessageEl(msg));
+  });
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function createMessageEl(msg) {
+  const div = document.createElement('div');
+  div.className = `msg-group ${msg.role}`;
+
+  const isAI = msg.role === 'ai';
+  const time = new Date(msg.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const senderName = isAI ? 'MedInteract AI' : CONFIG.USER.name;
+
+  const avatarHTML = isAI
+    ? `<div class="msg-avatar ai-av"><svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/><rect x="11" y="7" width="2" height="10" fill="rgba(255,255,255,0.6)"/><rect x="7" y="11" width="10" height="2" fill="rgba(255,255,255,0.6)"/></svg></div>`
+    : `<div class="msg-avatar">${CONFIG.USER.initials}</div>`;
+
+  const badgeHTML = isAI ? `<span class="sender-badge">AI</span>` : '';
+  const bubbleContent = isAI ? formatAIContent(msg.content) : `<p>${escHtml(msg.content)}</p>`;
+
+  div.innerHTML = `
+    ${avatarHTML}
+    <div class="msg-body">
+      <div class="msg-sender">${escHtml(senderName)} ${badgeHTML}</div>
+      <div class="msg-bubble">${bubbleContent}</div>
+      <div class="msg-time">${time}</div>
+    </div>
+  `;
+  return div;
+}
+
+function addMessageToDOM(msg) {
+  const container = document.getElementById('messagesContainer');
+  const welcome = container.querySelector('.welcome-screen');
+  if (welcome) welcome.remove();
+  const el = createMessageEl(msg);
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+/* ─────────────────────────────────────────────
+   AI RESPONSE FORMATTER
+────────────────────────────────────────────── */
+function formatAIContent(text) {
+  let h = escHtml(text);
+
+  // Risk levels
+  h = h.replace(/\b(ALTO|CONTRAINDICADO|GRAVÍSSIMO)\b/gi,
+    '<span class="risk-chip alto">⊗ $1</span>');
+  h = h.replace(/\b(MODERADO|CAUTELA|MODERADA)\b/gi,
+    '<span class="risk-chip moderado">◈ $1</span>');
+  h = h.replace(/\b(BAIXO|MONITORAR|MENOR)\b/gi,
+    '<span class="risk-chip baixo">◎ $1</span>');
+
+  // Drug names: **bold** and `code`
+  h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/`([^`]+)`/g, '<span class="drug-tag">$1</span>');
+
+  // Headers
+  h = h.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+  h = h.replace(/^##\s+(.+)$/gm,  '<h3>$1</h3>');
+
+  // Lists
+  const lines = h.split('\n');
+  const out = [];
+  let inList = false;
+
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) continue;
+
+    const isBullet = /^[\-\*•]\s+/.test(line);
+    if (isBullet) {
+      if (!inList) { out.push('<ul>'); inList = true; }
+      out.push(`<li>${line.replace(/^[\-\*•]\s+/, '')}</li>`);
+    } else {
+      if (inList) { out.push('</ul>'); inList = false; }
+      if (line.startsWith('<h3>') || line.startsWith('<ul>') || line.includes('risk-chip')) {
+        out.push(line);
+      } else {
+        out.push(`<p>${line}</p>`);
+      }
+    }
+  }
+  if (inList) out.push('</ul>');
+  return out.join('');
+}
+
+/* ─────────────────────────────────────────────
+   SEND MESSAGE
+────────────────────────────────────────────── */
+async function sendMessage(text) {
+  text = text.trim();
+  if (!text || state.isLoading) return;
+
+  state.isLoading = true;
+  updateSendBtn(true);
+
+  // Create conversation if needed
+  if (!state.activeConvId) {
+    createConversation(text);
+  }
+
+  const conv = getActiveConv();
+
+  // User message
+  const userMsg = { role: 'user', content: text, ts: Date.now() };
+  conv.messages.push(userMsg);
+  addMessageToDOM(userMsg);
+
+  // Update title if first message
+  if (conv.messages.filter(m => m.role === 'user').length === 1) {
+    conv.title = summarizeTitle(text);
+    renderSidebar();
+    updateChatHeader(conv);
+  }
+
+  // Typing indicator
+  const typingEl = showTyping();
+
+  try {
+    // Build message history for API
+    const apiMessages = conv.messages
+      .filter(m => m.role === 'user' || m.role === 'ai')
+      .map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
+
+    const aiText = await callAI(apiMessages);
+
+    typingEl.remove();
+
+    const aiMsg = { role: 'ai', content: aiText, ts: Date.now() };
+    conv.messages.push(aiMsg);
+    addMessageToDOM(aiMsg);
+    updateChatHeader(conv);
+    renderSidebar();
+
+  } catch (err) {
+    typingEl.remove();
+    const errMsg = { role: 'ai', content: `Erro ao processar a consulta: ${err.message}. Verifique sua conexão e tente novamente.`, ts: Date.now() };
+    conv.messages.push(errMsg);
+    addMessageToDOM(errMsg);
+    console.error('API Error:', err);
+  }
+
+  state.isLoading = false;
+  updateSendBtn(false);
+  document.getElementById('chatInput').focus();
+}
+
+function showTyping() {
+  const container = document.getElementById('messagesContainer');
+  const el = document.createElement('div');
+  el.className = 'typing-group';
+  el.id = 'typingIndicator';
+  el.innerHTML = `
+    <div class="msg-avatar ai-av">
+      <svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/><rect x="11" y="7" width="2" height="10" fill="rgba(255,255,255,0.6)"/><rect x="7" y="11" width="10" height="2" fill="rgba(255,255,255,0.6)"/></svg>
+    </div>
+    <div class="typing-bubble">
+      <span class="typing-label">MedInteract está analisando</span>
+      <div class="t-dots">
+        <div class="td"></div><div class="td"></div><div class="td"></div>
+      </div>
+    </div>
+  `;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+  return el;
+}
+
+function updateSendBtn(loading) {
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = loading;
+  btn.style.opacity = loading ? '0.5' : '1';
+}
+
+function sendQuick(text) {
+  document.getElementById('chatInput').value = text;
+  sendMessage(text);
+  document.getElementById('chatInput').value = '';
+  document.getElementById('charCount').textContent = '0 / 800';
+}
+
+function clearInput() {
+  document.getElementById('chatInput').value = '';
+  document.getElementById('charCount').textContent = '0 / 800';
+  const inp = document.getElementById('chatInput');
+  inp.style.height = 'auto';
+  inp.focus();
+}
+
+function clearChat() {
+  const conv = getActiveConv();
+  if (!conv) return;
+  conv.messages = [];
+  showWelcome();
+  updateChatHeader(conv);
+  renderSidebar();
+  showToast('🧹 Conversa limpa');
+}
+
+/* ─────────────────────────────────────────────
+   INPUT EVENTS
+────────────────────────────────────────────── */
+const chatInput = document.getElementById('chatInput');
+const charCount = document.getElementById('charCount');
+
+chatInput.addEventListener('input', () => {
+  charCount.textContent = `${chatInput.value.length} / 800`;
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 140) + 'px';
+});
+
+chatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    const text = chatInput.value;
+    if (text.trim()) {
+      sendMessage(text);
+      chatInput.value = '';
+      charCount.textContent = '0 / 800';
+      chatInput.style.height = 'auto';
+    }
+  }
+});
+
+document.getElementById('sendBtn').addEventListener('click', () => {
+  const text = chatInput.value;
+  if (text.trim()) {
+    sendMessage(text);
+    chatInput.value = '';
+    charCount.textContent = '0 / 800';
+    chatInput.style.height = 'auto';
+  }
+});
+
+document.getElementById('newChatBtn').addEventListener('click', () => {
+  state.activeConvId = null;
+  showWelcome();
+  updateChatHeader(null);
+  document.getElementById('chatInput').focus();
+  renderSidebar();
+});
+
+/* ─────────────────────────────────────────────
+   USER MENU
+────────────────────────────────────────────── */
+const userAvatarBtn = document.getElementById('userAvatarBtn');
+const userDropdown  = document.getElementById('userDropdown');
+
+userAvatarBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  userDropdown.classList.toggle('open');
+});
+
+document.addEventListener('click', () => userDropdown.classList.remove('open'));
+userDropdown.addEventListener('click', e => e.stopPropagation());
+
+// Populate user info
+document.getElementById('userInitials').textContent   = CONFIG.USER.initials;
+document.getElementById('dropdownInitials').textContent = CONFIG.USER.initials;
+document.getElementById('dropdownName').textContent    = CONFIG.USER.name;
+
+/* ─────────────────────────────────────────────
+   DARK MODE
+────────────────────────────────────────────── */
+function toggleDarkMode() {
+  state.isDark = !state.isDark;
+  document.documentElement.setAttribute('data-theme', state.isDark ? 'dark' : 'light');
+  const toggle = document.getElementById('themeToggle');
+  const icon   = document.getElementById('themeIcon');
+  toggle.classList.toggle('on', state.isDark);
+  icon.textContent = state.isDark ? '🌙' : '☀️';
+  showToast(state.isDark ? '🌙 Modo escuro ativado' : '☀️ Modo claro ativado');
+}
+
+/* ─────────────────────────────────────────────
+   ACTIONS
+────────────────────────────────────────────── */
+function openProfile() {
+  userDropdown.classList.remove('open');
+  showToast('👤 Perfil em desenvolvimento');
+}
+
+function openSettings() {
+  userDropdown.classList.remove('open');
+  showToast('⚙️ Configurações em desenvolvimento');
+}
+
+function logout() {
+  userDropdown.classList.remove('open');
+  showToast('🚪 Saindo...');
+  setTimeout(() => { alert('Redirecionando para login...'); }, 1000);
+}
+
+/* ─────────────────────────────────────────────
+   TOAST
+────────────────────────────────────────────── */
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ─────────────────────────────────────────────
+   UTILITIES
+────────────────────────────────────────────── */
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ─────────────────────────────────────────────
+   SIDEBAR SEARCH FILTER
+────────────────────────────────────────────── */
+document.getElementById('convSearch').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll('.conv-item').forEach(el => {
+    const title = el.querySelector('.conv-title')?.textContent.toLowerCase() || '';
+    el.style.display = title.includes(q) ? '' : 'none';
+  });
+});
+
+/* ─────────────────────────────────────────────
+   PARTICLE CANVAS (fundo animado)
+────────────────────────────────────────────── */
+(function initParticles() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function makeParticle() {
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.4 + 0.3,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: (Math.random() - 0.5) * 0.25,
+      alpha: Math.random() * 0.4 + 0.05,
+    };
+  }
+
+  function init() {
+    resize();
+    particles = Array.from({ length: Math.floor(W / 18) }, makeParticle);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const dark = document.documentElement.getAttribute('data-theme') !== 'light';
+    const baseColor = dark ? '74,222,128' : '22,163,74';
+
+    // Draw particles
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${baseColor},${p.alpha})`;
+      ctx.fill();
+    });
+
+    // Draw connections
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d  = Math.sqrt(dx * dx + dy * dy);
+        if (d < 110) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(${baseColor},${0.07 * (1 - d / 110)})`;
+          ctx.lineWidth = 0.6;
+          ctx.stroke();
+        }
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  init();
+  draw();
+  window.addEventListener('resize', () => { init(); });
+})();
+
+/* ─────────────────────────────────────────────
+   INIT
+────────────────────────────────────────────── */
+renderSidebar();
+</script>
+</body>
+</html>

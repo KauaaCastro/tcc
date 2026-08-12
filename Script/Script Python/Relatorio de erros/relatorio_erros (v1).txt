@@ -1,0 +1,179 @@
+Acetato de Flecainida
+Acetato de Metilprednisolona
+Acetato de Octreotida
+Acetato de Tocoferol (Vitamina E)
+Adalimumabe
+Ampicilina + Sulbactam
+Anfotericina B
+Azatioprina
+Azitromicina Di hidratada
+Benzilpenicilina Potassica
+Besilato de Amlodipino
+Besilato de Atracurio
+Besilato de Cisatracurio
+Bevacizumabe
+Bicarbonato de Sodio
+Bisacodil
+Brometo de Rocurônio
+Brometo de Vecurônio
+Bromidrato de Eletriptana
+Bromidrato de Piridostigmina
+Bumetanida
+Cafeina Anidra
+Calcitonina Sintetica de Salmao
+Canagliflozina
+Carbonato de Calcio
+Carbonato de Litio
+Ceftazidima
+Ceftriaxona Sodica
+Cefuroxima Axetil
+Certolizumabe Pegol
+Ciclofosfamida
+Citrato de Calcio
+Cloreto de Potassio
+Cloreto de Succinilcolina
+Cloridrato de Atomoxetina
+Cloridrato de Bupivacaina
+Cloridrato de Buprenorfina
+Cloridrato de Cetamina
+Cloridrato de Clonidina
+Cloridrato de Colesevelam
+Cloridrato de Colestipol
+Cloridrato de Daunorrubicina
+Cloridrato de Difenidramina
+Cloridrato de Etambutol
+Cloridrato de Gemcitabina
+Cloridrato de Hidralazina
+Cloridrato de Imipramina
+Cloridrato de Ivabradina
+Cloridrato de Lidocaina
+Cloridrato de Metadona
+Cloridrato de Ropivacaina
+Cloridrato de Tamsulosina
+Cloridrato de Vardenafila
+Colecalciferol (Vitamina D3)
+Colestiramina
+Denosumabe
+Desflurano
+Dexlansoprazol
+Difosfato de Cloroquina
+Dinitrato de Isossorbida
+Dinoprostona
+Dolutegravir Sodico
+Dulaglutida
+Dupilumabe
+Enoxaparina Sodica
+Epinefrina (Adrenalina)
+Eplerenona
+Eritropoetina Humana Recombinante
+Ertapenem Sodico
+Ertugliflozina
+Esomeprazol Magnesico
+Estearato de Eritromicina
+Etanercepte
+Etexilato de Dabigatrana
+Famotidina
+Febuxostate
+Felodipino
+Fenitoina
+Fitomenadiona (Vitamina K1)
+Fluorouracil
+Fluvastatina Sodica
+Fosfato de Codeina
+Gemfibrozila
+Golimumabe
+Heitartarato de Zolpidem
+Heparina Sodica
+Hidroxido de Aluminio
+Hidroxido de Magnesio
+Imipenem + Cilastatina Sodica
+Infliximabe
+Insulina Degludeca
+Insulina Detemir
+Insulina Glargina
+Insulina Humana NPH
+Insulina Humana Regular
+Isoniazida
+Lactulose
+Levofloxacino Hemieratado
+Levotiroxina Sodica
+Liraglutida
+Losartana Potassica
+Lovastatina
+Maleato de Clorfeniramina
+Maleato de Metilergometrina
+Maleato de Rosiglitazona
+Melatonina
+Meropenem Tri hidratado
+Metamizol Magnesico
+Metimazol
+Metocarbamol
+Micafungina Sodica
+Misoprostol
+Modafinila
+Montelucaste Sodico
+Nifedipino
+Olmesartana Medoxomila
+Omalizumabe
+Omeprazol Sodico
+Palmitato de Retinol (Vitamina A)
+Pancreatina
+Pantoprazol Sodico
+Pegfilgrastim
+Penicilamina
+Pirazinamida
+Polietilenoglicol (PEG)
+Posaconazol
+Prasugrel
+Pravastatina Sodica
+Praziquantel
+Primidona
+Probenecida
+Progesterona
+Propiltiouracil
+Propionato de Fluticasona
+Quelato de Magnesio
+Rifampicina
+Ringer Lactato
+Risedronato Sodico
+Rituximabe
+Sacarato de Hidroxido de Ferro III
+Saxagliptina
+Secuquinumabe
+Semaglutida
+Senna alexandrina
+Somatropina
+Sulfassalazina
+Sulfato Ferroso
+Sulfato de Atropina
+Sulfato de Bleomicina
+Sulfato de Protamina
+Sulfato de Vinblastina
+Tartarato de Ergotamina
+Tartarato de Rivastigmina
+Teofilina
+Teriparatida
+Testosterona
+Tiopental Sodico
+Trastuzumabe
+Ursodiol
+Ustequinumabe
+Vacina Adsorvida Sarampo, Caxumba e Rubeola
+Vacina Contra Hepatite B
+Vacina Contra Influenza
+Valerato de Betametasona
+Varfarina Sodica
+Vasopressina
+Zafirlucaste
+Zidovudina (AZT)
+Zolmitriptana
+Zopiclona
+acido Acetilsalicilico
+acido Ascorbico (Vitamina C)
+acido Folico (Vitamina B9)
+acido Tranexâmico
+acido Ursodesoxicolico
+acido Valproico
+acido Zoledrônico
+oxido Nitroso
+oxido de Zinco
