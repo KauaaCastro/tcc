@@ -1,0 +1,171 @@
+RELATÓRIO DE FALHAS - TCC
+Total não encontrados: 168
+------------------------------
+Abaloparatida
+Acetato de Lanreotida
+Alogliptina
+Alprostadil
+Amoxicilina + Sulbactam
+Anlodipino
+Armodafinila
+Ascorbato de Sódio
+Aspartato de Magnésio
+Benralizumabe
+Benzbromarona
+Benzil tiouracil
+Benzilpenicilina Procaína
+Betacaroteno
+Biapenem
+Brometo de Pancurônio
+Brometo de Pipecurônio
+Candesartana Cilexetila
+Cangrelor
+Carbimazol
+Carboprosta
+Cascarosídeo
+Cefoperazona
+Cefotaxima Sódica
+Certolizumabe
+Certolizumabe Pegol
+Ciclobenzaprina
+Citrato de Potássio
+Citrato de Potássio
+Clobetasol
+Clodronato de Sódio
+Clorambucila
+Cloreto de Alcurônio
+Cloreto de Alcurônio
+Cloridrato de Encainida
+Cloridrato de Prilocacaína
+Colestipol
+Colestiramina
+Dalteparina Sódica
+Darbepoetina Alfa
+Decamectônio
+Desipramina
+Dexclorfeniramina
+Dextropropoxifeno
+Dimenidrinato
+Dipirona Sódica
+Dipofilina
+Distigmina
+Divalproato de Sódio
+Dióxido de Titânio
+Donepezila
+Doripenem
+Doxazosina
+Enflurano
+Eprosartana
+Ergocalciferol
+Ergometrina
+Escopolamina
+Esketamina
+Espiramicina
+Estavudina
+Eszopiclona
+Etilefrina
+Etionamida
+Exenatida
+Femprocumona
+Ferripolimaltose
+Finerenona
+Fluconazol Injetável
+Folinato de Cálcio
+Fosfato de Cálcio
+Fosfenitoína
+Frovatriptana
+Gatifloxacino
+Gliconato Ferroso
+Gliconato de Cálcio
+Golimumabe
+Guselcumabe
+Hexaditrina
+Hidroxicloroquina
+Idarrubicina
+Ilaprazol
+Insulina Asparte
+Insulina Glulisina
+Insulina Isofana
+Insulina Lispro
+Insulina Solúvel
+Ipragliflozina
+Isavuconazol
+Isequizumabe
+Lercanidipino
+Leva Acetilmetadol
+Liotironina Sódica
+Lisdexanfetamina
+Lixisenatida
+Lodenafila
+Macrogol
+Mecasermina
+Medroxiprogesterona
+Menadiona (Vitamina K3)
+Mepivacaína
+Mepolizumabe
+Mesterolona
+Metarbital
+Metisergida
+Metorexital Sódico
+Minoxidil Oral
+Mitomicina
+Molgramostim
+Mometasona
+Moxonidina
+Nalbufina
+Naratriptana
+Natalizumabe
+Nizatidina
+Ofatumumabe
+Olsalazina
+Oxamniquina
+Palmitato de Ascorbila
+Pamidronato Dissódico
+Pancrelipase
+Panipenem + Betamiprona
+Pentaeritritila
+Pertuzumabe
+Picossulfato de Sódio
+Piretanida
+Pitavastatina Cálcica
+Pitavastatina Sódica
+Pranlucaste
+Pranlucaste Hidratado
+Prilocaína
+Protionamida
+Rabeprazol Sódico
+Raloxifeno
+Raltegravir
+Ranibizumabe
+Ranolazina
+Rifabutina
+Roxitromicina
+Sitaxtentana
+Solução Glicofisiológica
+Sotagliflozina
+Sulfinpirazona
+Tegafur
+Tenatoprazol
+Teobromina
+Terizidona
+Terlipressina
+Tinzaparina Sódica
+Tirzepatida
+Trientina
+Trifusal
+Trissilicato de Magnésio
+Troglitazona
+Vacina Contra Hepatite A
+Vacina Contra Sarampo e Caxumba
+Vacina Pneumocócica
+Valproato de Lítio
+Vedolizumabe
+Vinorelbina
+Xenônio
+Ximelagatrana
+Zaleplona
+Zoledronato
+Ácido Aminocapróico
+Ácido Obeticólico
+Ácido Quenodesoxicólico
+Óxido de Magnésio

@@ -1,0 +1,55 @@
+# ==========================================
+# 🔑 SEGURANÇA (Chaves de API e Segredos)
+# ==========================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ==========================================
+# 🐍 PYTHON (Arquivos temporários e Venv)
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# ==========================================
+# 🗄️ BANCO DE DADOS LOCAL & LOGS
+# ==========================================
+*.db
+*.sqlite
+*.sqlite3
+*.log
+logs/
+
+# ==========================================
+# 🌐 FRONTEND (Node / Cache / Temp)
+# ==========================================
+node_modules/
+.npm
+.cache/
+
+# ==========================================
+# 💻 SISTEMA OPERACIONAL & EDITORES
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# 💻 ARQUIVOS DE SUPORTE
+# ==========================================
+Support/
+support/
+GEMINI.md

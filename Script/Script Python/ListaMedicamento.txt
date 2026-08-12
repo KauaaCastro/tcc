@@ -1,0 +1,168 @@
+    1. Abaloparatida
+    2. Acetato de Lanreotida
+    3. Alogliptina
+    4. Alprostadil
+    5. Amoxicilina + Sulbactam
+    6. Anlodipino
+    7. Armodafinila
+    8. Ascorbato de Sódio
+    9. Aspartato de Magnésio
+   10. Benralizumabe
+   11. Benzbromarona
+   12. Benzil tiouracil
+   13. Benzilpenicilina Procaína
+   14. Betacaroteno
+   15. Biapenem
+   16. Brometo de Pancurônio
+   17. Brometo de Pipecurônio
+   18. Candesartana Cilexetila
+   19. Cangrelor
+   20. Carbimazol
+   21. Carboprosta
+   22. Cascarosídeo
+   23. Cefoperazona
+   24. Cefotaxima Sódica
+   25. Certolizumabe
+   26. Certolizumabe Pegol
+   27. Ciclobenzaprina
+   28. Citrato de Potássio
+   29. Citrato de Potássio
+   30. Clobetasol
+   31. Clodronato de Sódio
+   32. Clorambucila
+   33. Cloreto de Alcurônio
+   34. Cloreto de Alcurônio
+   35. Cloridrato de Encainida
+   36. Cloridrato de Prilocacaína
+   37. Colestipol
+   38. Colestiramina
+   39. Dalteparina Sódica
+   40. Darbepoetina Alfa
+   41. Decamectônio
+   42. Desipramina
+   43. Dexclorfeniramina
+   44. Dextropropoxifeno
+   45. Dimenidrinato
+   46. Dipirona Sódica
+   47. Dipofilina
+   48. Distigmina
+   49. Divalproato de Sódio
+   50. Dióxido de Titânio
+   51. Donepezila
+   52. Doripenem
+   53. Doxazosina
+   54. Enflurano
+   55. Eprosartana
+   56. Ergocalciferol
+   57. Ergometrina
+   58. Escopolamina
+   59. Esketamina
+   60. Espiramicina
+   61. Estavudina
+   62. Eszopiclona
+   63. Etilefrina
+   64. Etionamida
+   65. Exenatida
+   66. Femprocumona
+   67. Ferripolimaltose
+   68. Finerenona
+   69. Fluconazol Injetável
+   70. Folinato de Cálcio
+   71. Fosfato de Cálcio
+   72. Fosfenitoína
+   73. Frovatriptana
+   74. Gatifloxacino
+   75. Gliconato Ferroso
+   76. Gliconato de Cálcio
+   77. Golimumabe
+   78. Guselcumabe
+   79. Hexaditrina
+   80. Hidroxicloroquina
+   81. Idarrubicina
+   82. Ilaprazol
+   83. Insulina Asparte
+   84. Insulina Glulisina
+   85. Insulina Isofana
+   86. Insulina Lispro
+   87. Insulina Solúvel
+   88. Ipragliflozina
+   89. Isavuconazol
+   90. Isequizumabe
+   91. Lercanidipino
+   92. Leva Acetilmetadol
+   93. Liotironina Sódica
+   94. Lisdexanfetamina
+   95. Lixisenatida
+   96. Lodenafila
+   97. Macrogol
+   98. Mecasermina
+   99. Medroxiprogesterona
+  100. Menadiona (Vitamina K3)
+  101. Mepivacaína
+  102. Mepolizumabe
+  103. Mesterolona
+  104. Metarbital
+  105. Metisergida
+  106. Metorexital Sódico
+  107. Minoxidil Oral
+  108. Mitomicina
+  109. Molgramostim
+  110. Mometasona
+  111. Moxonidina
+  112. Nalbufina
+  113. Naratriptana
+  114. Natalizumabe
+  115. Nizatidina
+  116. Ofatumumabe
+  117. Olsalazina
+  118. Oxamniquina
+  119. Palmitato de Ascorbila
+  120. Pamidronato Dissódico
+  121. Pancrelipase
+  122. Panipenem + Betamiprona
+  123. Pentaeritritila
+  124. Pertuzumabe
+  125. Picossulfato de Sódio
+  126. Piretanida
+  127. Pitavastatina Cálcica
+  128. Pitavastatina Sódica
+  129. Pranlucaste
+  130. Pranlucaste Hidratado
+  131. Prilocaína
+  132. Protionamida
+  133. Rabeprazol Sódico
+  134. Raloxifeno
+  135. Raltegravir
+  136. Ranibizumabe
+  137. Ranolazina
+  138. Rifabutina
+  139. Roxitromicina
+  140. Sitaxtentana
+  141. Solução Glicofisiológica
+  142. Sotagliflozina
+  143. Sulfinpirazona
+  144. Tegafur
+  145. Tenatoprazol
+  146. Teobromina
+  147. Terizidona
+  148. Terlipressina
+  149. Tinzaparina Sódica
+  150. Tirzepatida
+  151. Trientina
+  152. Trifusal
+  153. Trissilicato de Magnésio
+  154. Troglitazona
+  155. Vacina Contra Hepatite A
+  156. Vacina Contra Sarampo e Caxumba
+  157. Vacina Pneumocócica
+  158. Valproato de Lítio
+  159. Vedolizumabe
+  160. Vinorelbina
+  161. Xenônio
+  162. Ximelagatrana
+  163. Zaleplona
+  164. Zoledronato
+  165. Ácido Aminocapróico
+  166. Ácido Obeticólico
+  167. Ácido Quenodesoxicólico
+  168. Óxido de Magnésio
