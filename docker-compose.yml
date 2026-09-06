@@ -14,11 +14,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  backend:
+  ai-engine:
     build:
-      context: ./backend
+      context: ./backend/ai-engine
       dockerfile: Dockerfile
-    container_name: medinteract-backend
+    container_name: medinteract-ai-engine
     ports:
       - "5000:5000"
     environment:
@@ -28,17 +28,6 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     depends_on:
       - postgres-db
-    restart: always
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: medinteract-frontend
-    ports:
-      - "8080:80"
-    depends_on:
-      - backend
     restart: always
 
 volumes:

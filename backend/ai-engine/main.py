@@ -2,7 +2,6 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api.router import api_router
 from app.utils.logger import logger
 
 app = FastAPI(
@@ -13,7 +12,7 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS Middleware setup
+# Configuração de CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,8 +21,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API Router
-app.include_router(api_router, prefix=settings.API_V1_STR)
+@app.get("/api/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "project": settings.PROJECT_NAME,
+        "version": settings.VERSION
+    }
 
 @app.on_event("startup")
 async def startup_event():
@@ -36,3 +40,4 @@ if __name__ == "__main__":
         port=settings.PORT,
         reload=True
     )
+
