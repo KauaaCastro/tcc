@@ -60,7 +60,6 @@ class EmbeddingService:
 embedding_service = EmbeddingService()
     
 # Bloco para teste de funcionamento do arquivo
-
 if __name__ == "__main__":
     async def testar():
         print("Testando a geração de vetor com o Gemini...")
