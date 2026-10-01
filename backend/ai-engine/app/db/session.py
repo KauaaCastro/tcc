@@ -55,6 +55,14 @@ async def init_db() -> None:
             # Cria as tabelas definidas nos modelos que herdam de Base
             await connection.run_sync(Base.metadata.create_all)
             logger.info("[DB] Tabelas do banco de dados sincronizadas com sucesso.")
+
+            # Cria o índice HNSW para busca semântica em milissegundos
+            await connection.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_bula_chunks_embedding 
+                ON bula_chunks 
+                USING hnsw (embedding vector_cosine_ops);
+            """))
+            logger.info("[DB] Indice HNSW na tabela bula_chunks criado/verificado com sucesso.")
     except Exception as e:
         logger.error(f"[DB] Erro ao inicializar o banco de dados: {str(e)}")
         raise

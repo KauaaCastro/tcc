@@ -37,6 +37,26 @@ class RAGService:
             result = await session.execute(stmt)
             chunks = result.scalars().all()
 
-            return [chunk.to_dict() for chunk in chunks]
-
 rag_service = RAGService()
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    async def test_search():
+        print("--- TESTE DE BUSCA SEMÂNTICA NO PGVECTOR (HNSW) ---")
+        pergunta = "Quais as reações adversas e efeitos colaterais da Atorvastatina?"
+        print(f"Pergunta de teste: '{pergunta}'\n")
+
+        chunks = await rag_service.search_relevant_chunks(pergunta, top_k=2)
+        if not chunks:
+            print("[INFO] Nenhum chunk retornado. Certifique-se de que o banco está rodando e semeado.")
+        else:
+            print(f"[SUCESSO] {len(chunks)} trechos clínicos recuperados via similaridade de cosseno:")
+            for i, chunk in enumerate(chunks, start=1):
+                print(f"\nResultado {i}:")
+                print(f"  Medicamento: {chunk.get('med_name')}")
+                print(f"  Trecho: {chunk.get('content')[:200]}...")
+
+    asyncio.run(test_search())
+

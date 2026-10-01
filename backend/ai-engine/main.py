@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.utils.logger import logger
+from app.api.router import api_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -20,6 +21,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Registra os roteadores da API (/api)
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
 
 @app.get("/api/health")
 async def health_check():
