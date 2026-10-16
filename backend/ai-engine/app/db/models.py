@@ -1,46 +1,106 @@
-from datetime import datetime
-from typing import Dict, Any, Optional, List
-from sqlalchemy import Column, Integer, String, Text, DateTime
+import uuid
+from typing import Dict, Any, Optional
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    DateTime,
+    Numeric,
+    Boolean,
+    ForeignKey,
+)
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from pgvector.sqlalchemy import Vector
 from app.db.session import Base
 
 
+# Tabela 'perfil_usuario': Perfil Clínico Anônimo identificado via UUID v4
+class PerfilUsuario(Base):
+    __tablename__ = "perfil_usuario"
+
+    id_usuario = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    apelido = Column(String(50), nullable=False)
+    idade = Column(Integer, nullable=True)
+    peso = Column(Numeric(5, 2), nullable=True)
+    altura = Column(Numeric(3, 2), nullable=True)
+    gestante_lactante = Column(Boolean, default=False, server_default="false")
+    alergias = Column(Text, nullable=True)
+    problemas_saude = Column(Text, nullable=True)
+    medicacoes_continuas = Column(Text, nullable=True)
+    pratica_esportes = Column(Text, nullable=True)
+    horas_sono = Column(Numeric(3, 1), nullable=True)
+    atualizado_em = Column(
+        DateTime(timezone=False),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    # Calcula o IMC (peso / altura²) caso ambos os valores sejam válidos
+    def calcular_imc(self) -> Optional[float]:
+        if self.peso is not None and self.altura is not None and float(self.altura) > 0:
+            return round(float(self.peso) / (float(self.altura) ** 2), 2)
+        return None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "idUsuario": str(self.id_usuario),
+            "apelido": self.apelido,
+            "idade": self.idade,
+            "peso": float(self.peso) if self.peso is not None else None,
+            "altura": float(self.altura) if self.altura is not None else None,
+            "imc": self.calcular_imc(),
+            "gestanteLactante": bool(self.gestante_lactante),
+            "alergias": self.alergias,
+            "problemasSaude": self.problemas_saude,
+            "medicacoesContinuas": self.medicacoes_continuas,
+            "praticaEsportes": self.pratica_esportes,
+            "horasSono": float(self.horas_sono) if self.horas_sono is not None else None,
+            "atualizadoEm": self.atualizado_em.isoformat() if self.atualizado_em else None,
+        }
+
+
+# Tabela 'historico_consultas': Histórico de perguntas e respostas vinculado ao UUID
+class HistoricoConsultas(Base):
+    __tablename__ = "historico_consultas"
+
+    id_consulta = Column(Integer, primary_key=True, autoincrement=True)
+    id_usuario = Column(
+        UUID(as_uuid=True),
+        ForeignKey("perfil_usuario.id_usuario", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    pergunta_usuario = Column(Text, nullable=False)
+    resposta_ia = Column(Text, nullable=False)
+    data_hora = Column(DateTime(timezone=False), server_default=func.now())
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "idConsulta": self.id_consulta,
+            "idUsuario": str(self.id_usuario) if self.id_usuario else None,
+            "perguntaUsuario": self.pergunta_usuario,
+            "respostaIa": self.resposta_ia,
+            "dataHora": self.data_hora.isoformat() if self.data_hora else None,
+        }
+
+
+# Tabela 'bula_chunks': Fragmentos de bulas da ANVISA vetorizados em 768 dimensões (PGVector)
 class BulaChunk(Base):
-    """
-    Representa a tabela 'bula_chunks' no PostgreSQL com suporte a PGVector.
-    
-    Cada registro armazena um fragmento clínico de uma bula da ANVISA
-    juntamente com seu vetor semântico gerado pelo modelo de inteligência artificial.
-    """
     __tablename__ = "bula_chunks"
 
-    # 1. Identificação única do fragmento
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-
-    # 2. Nome padronizado do medicamento (ex: 'Atorvastatina Calcica', 'Dipirona')
-    # O index=True acelera buscas textuais diretas por medicamento
     med_name = Column(String(255), nullable=False, index=True)
-
-    # 3. Posição ordinal do chunk dentro da bula (ex: 0, 1, 2... do mesmo remédio)
     chunk_index = Column(Integer, nullable=False, default=0)
-
-    # 4. Texto clínico extraído daquela seção da bula
     content = Column(Text, nullable=False)
-
-    # 5. Vetor semântico de 768 dimensões gerado pelo Gemini
-    # Permite consultas semânticas no PostgreSQL por similaridade de cosseno (<=>)
     embedding = Column(Vector(768), nullable=True)
-
-    # 6. Data e hora do registro no banco
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     def __repr__(self) -> str:
-        """Representação textual amigável para depuração no console."""
         return f"<BulaChunk(id={self.id}, med='{self.med_name}', chunk={self.chunk_index})>"
 
     def to_dict(self) -> Dict[str, Any]:
-        """Converte a entidade do banco em um dicionário Python simples."""
         return {
             "id": self.id,
             "med_name": self.med_name,

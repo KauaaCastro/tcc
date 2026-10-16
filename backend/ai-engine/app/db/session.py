@@ -48,13 +48,16 @@ async def init_db() -> None:
     """
     try:
         async with engine.begin() as connection:
+            # Importa os modelos para registrá-los no Base.metadata (perfil_usuario, historico_consultas, bula_chunks)
+            import app.db.models  # noqa: F401
+
             # Garante que a extensão de vetores do PostgreSQL esteja ativada
             await connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
             logger.info("[DB] Extensao PGVector habilitada com sucesso.")
 
             # Cria as tabelas definidas nos modelos que herdam de Base
             await connection.run_sync(Base.metadata.create_all)
-            logger.info("[DB] Tabelas do banco de dados sincronizadas com sucesso.")
+            logger.info("[DB] Tabelas (perfil_usuario, historico_consultas, bula_chunks) sincronizadas com sucesso.")
 
             # Cria o índice HNSW para busca semântica em milissegundos
             await connection.execute(text("""

@@ -36,6 +36,11 @@ async def health_check():
 
 @app.on_event("startup")
 async def startup_event():
+    from app.db.session import init_db
+    try:
+        await init_db()
+    except Exception as e:
+        logger.warning(f"[STARTUP] Aviso ao inicializar tabelas no banco: {e}")
     logger.info(f"🚀 {settings.PROJECT_NAME} v{settings.VERSION} iniciado com sucesso na porta {settings.PORT}.")
 
 if __name__ == "__main__":
