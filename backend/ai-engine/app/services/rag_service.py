@@ -4,14 +4,14 @@ from sqlalchemy import select, desc
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.db.session import AsyncSessionLocal
-from app.db.models import BulaChunk, PerfilUsuario, HistoricoConsultas
+from app.db.models import BulaChunk, UserRegister, FarmHistory, HistoricoConsultas
 from app.schemas.chat import PerfilUsuarioPayload
 from app.services.embedding_service import embedding_service
 from app.services.prompt_service import prompt_service
 from app.utils.logger import logger
 
 
-# Serviço de busca vetorial (RAG) e persistência do perfil anônimo e histórico
+# Serviço de busca vetorial (RAG) e persistência do usuário, ficha clínica (FarmHistory) e histórico
 class RAGService:
 
     # Busca os top_k trechos de bulas mais próximos por distância de cosseno (<=>)
@@ -37,26 +37,55 @@ class RAGService:
             chunks = result.scalars().all()
             return [chunk.to_dict() for chunk in chunks]
 
-    # Consulta o perfil clínico anônimo pelo UUID v4
+    # Consulta o registro do usuário (UserRegister) e sua ficha clínica (FarmHistory) pelo UUID
     async def get_perfil_usuario(self, id_usuario: Optional[UUID]) -> Optional[Dict[str, Any]]:
         if not id_usuario:
             return None
 
         try:
             async with AsyncSessionLocal() as session:
-                stmt = select(PerfilUsuario).where(PerfilUsuario.id_usuario == id_usuario)
-                result = await session.execute(stmt)
-                perfil = result.scalar_one_or_none()
-                return perfil.to_dict() if perfil else None
+                res_user = await session.execute(
+                    select(UserRegister).where(UserRegister.id_usuario == id_usuario)
+                )
+                user_reg = res_user.scalar_one_or_none()
+
+                res_farm = await session.execute(
+                    select(FarmHistory).where(FarmHistory.user_id == id_usuario)
+                )
+                farm = res_farm.scalar_one_or_none()
+
+                if not user_reg and not farm:
+                    return None
+
+                apelido = user_reg.apelido if user_reg else "Paciente"
+                if farm:
+                    return farm.to_dict(apelido=apelido)
+
+                return {
+                    "idUsuario": str(id_usuario),
+                    "apelido": apelido,
+                    "idade": None,
+                    "peso": None,
+                    "altura": None,
+                    "imc": None,
+                    "gestanteLactante": False,
+                    "alergias": None,
+                    "problemasSaude": None,
+                    "medicacoesContinuas": None,
+                    "praticaEsportes": None,
+                    "horasSono": None,
+                    "atualizadoEm": None,
+                }
         except Exception as e:
-            logger.error(f"[RAG] Erro ao buscar perfil_usuario ({id_usuario}): {e}")
+            logger.error(f"[RAG] Erro ao buscar dados do usuário ({id_usuario}): {e}")
             return None
 
-    # Salva ou atualiza (Upsert) o perfil clínico anônimo limpando tags XML
+    # Salva ou atualiza (Upsert) a ficha clínica em FarmHistory e o apelido em UserRegister
     async def upsert_perfil_usuario(self, payload: PerfilUsuarioPayload) -> Dict[str, Any]:
-        values = {
-            "id_usuario": payload.id_usuario,
-            "apelido": prompt_service.sanitize_xml(payload.apelido, "Visitante"),
+        clean_apelido = prompt_service.sanitize_xml(payload.apelido, "Visitante")
+
+        farm_values = {
+            "user_id": payload.id_usuario,
             "idade": payload.idade,
             "peso": payload.peso,
             "altura": payload.altura,
@@ -69,20 +98,31 @@ class RAGService:
         }
 
         async with AsyncSessionLocal() as session:
-            stmt = pg_insert(PerfilUsuario).values(**values)
-            update_cols = {k: v for k, v in values.items() if k != "id_usuario"}
-            stmt = stmt.on_conflict_do_update(
-                index_elements=[PerfilUsuario.id_usuario],
+            # Garante que o usuário exista na tabela user_register antes de gravar em farm_history
+            stmt_user = pg_insert(UserRegister).values(
+                id_usuario=payload.id_usuario,
+                apelido=clean_apelido,
+            ).on_conflict_do_update(
+                index_elements=[UserRegister.id_usuario],
+                set_={"apelido": clean_apelido},
+            )
+            await session.execute(stmt_user)
+
+            # Faz Upsert da ficha clínica na tabela farm_history
+            stmt_farm = pg_insert(FarmHistory).values(**farm_values)
+            update_cols = {k: v for k, v in farm_values.items() if k != "user_id"}
+            stmt_farm = stmt_farm.on_conflict_do_update(
+                index_elements=[FarmHistory.user_id],
                 set_=update_cols,
             )
-            await session.execute(stmt)
+            await session.execute(stmt_farm)
             await session.commit()
 
             result = await session.execute(
-                select(PerfilUsuario).where(PerfilUsuario.id_usuario == payload.id_usuario)
+                select(FarmHistory).where(FarmHistory.user_id == payload.id_usuario)
             )
-            perfil = result.scalar_one()
-            return perfil.to_dict()
+            farm = result.scalar_one()
+            return farm.to_dict(apelido=clean_apelido)
 
     # Lista as consultas anteriores vinculadas ao UUID
     async def get_historico_consultas(self, id_usuario: UUID) -> List[Dict[str, Any]]:
@@ -112,10 +152,10 @@ class RAGService:
 
         try:
             async with AsyncSessionLocal() as session:
-                stmt_perfil = select(PerfilUsuario).where(PerfilUsuario.id_usuario == id_usuario)
-                res_perfil = await session.execute(stmt_perfil)
-                if not res_perfil.scalar_one_or_none():
-                    session.add(PerfilUsuario(id_usuario=id_usuario, apelido="Visitante"))
+                stmt_user = select(UserRegister).where(UserRegister.id_usuario == id_usuario)
+                res_user = await session.execute(stmt_user)
+                if not res_user.scalar_one_or_none():
+                    session.add(UserRegister(id_usuario=id_usuario, apelido="Visitante"))
                     await session.flush()
 
                 session.add(

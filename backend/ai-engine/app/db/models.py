@@ -16,12 +16,38 @@ from pgvector.sqlalchemy import Vector
 from app.db.session import Base
 
 
-# Tabela 'perfil_usuario': Perfil Clínico Anônimo identificado via UUID v4
-class PerfilUsuario(Base):
-    __tablename__ = "perfil_usuario"
+# Tabela 'user_register': Credenciais de login do usuário (UUID, apelido/nome, email e senha)
+class UserRegister(Base):
+    __tablename__ = "user_register"
 
     id_usuario = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     apelido = Column(String(50), nullable=False)
+    email = Column(String(100), nullable=True, unique=True)
+    password = Column(String(255), nullable=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "idUsuario": str(self.id_usuario),
+            "apelido": self.apelido,
+            "email": self.email,
+        }
+
+
+# Alias de compatibilidade caso algum módulo importe PerfilUsuario
+PerfilUsuario = UserRegister
+
+
+# Tabela 'farm_history': Ficha clínica do usuário vinculada ao user_register
+class FarmHistory(Base):
+    __tablename__ = "farm_history"
+
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("user_register.id_usuario", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+        index=True,
+    )
     idade = Column(Integer, nullable=True)
     peso = Column(Numeric(5, 2), nullable=True)
     altura = Column(Numeric(3, 2), nullable=True)
@@ -43,10 +69,10 @@ class PerfilUsuario(Base):
             return round(float(self.peso) / (float(self.altura) ** 2), 2)
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, apelido: Optional[str] = None) -> Dict[str, Any]:
         return {
-            "idUsuario": str(self.id_usuario),
-            "apelido": self.apelido,
+            "idUsuario": str(self.user_id),
+            "apelido": apelido or "Paciente",
             "idade": self.idade,
             "peso": float(self.peso) if self.peso is not None else None,
             "altura": float(self.altura) if self.altura is not None else None,
@@ -68,7 +94,7 @@ class HistoricoConsultas(Base):
     id_consulta = Column(Integer, primary_key=True, autoincrement=True)
     id_usuario = Column(
         UUID(as_uuid=True),
-        ForeignKey("perfil_usuario.id_usuario", ondelete="CASCADE"),
+        ForeignKey("user_register.id_usuario", ondelete="CASCADE"),
         nullable=True,
         index=True,
     )

@@ -12,12 +12,12 @@ Sempre que uma nova conversa for iniciada neste repositório (`C:\workspace\TCC`
    - [`support/docs/projeto_medinteract_relatorio_viabilidade.md`](file:///C:/workspace/TCC/support/docs/projeto_medinteract_relatorio_viabilidade.md)
    - Contém o nível de dificuldade, dependências (`pdfplumber`, `pgvector`, `fastapi`, `httpx`), pré-requisitos e o roteiro detalhado em 5 Etapas ("O Que Faremos e Como").
 
-3. **Especificação de Perfil Clínico Anônimo (Privacy by Design) e Prompt Sanduíche**:
+3. **Especificação de Login (`user_register`), Ficha Clínica (`farm_history`) e Prompt Sanduíche**:
    - [`c:\workspace\Relatório tcc\UserMolde\Alterações e Modelagens necessárias!.md`](file:///c:/workspace/Relat%C3%B3rio%20tcc/UserMolde/Altera%C3%A7%C3%B5es%20e%20Modelagens%20necess%C3%A1rias%21.md)
-   - Define o modelo sem senhas/dados sensíveis (identificação via `UUID v4` no `localStorage`), tabelas `perfil_usuario` e `historico_consultas`, sanitização XML (`.`replace("<", "").replace(">", "")`), cálculo de IMC no backend e Template Oficial do Prompt Sanduíche.
+   - Define o modelo separado em duas tabelas (`user_register` para login com `id_usuario` UUID, `apelido`, `email`, `password` + `farm_history` para a ficha clínica vinculada por `user_id`), além de `historico_consultas`, sanitização XML (`.replace("<", "").replace(">", "")`), cálculo de IMC no backend e Template Oficial do Prompt Sanduíche.
 
 4. **Relatório de Progresso e Ponto de Retomada**:
-   - [`c:\workspace\Relatório tcc\RELATORIO_PROGRESSO_E_RETOMADA.md`](file:///c:/workspace/Relat%C3%B3rio%20tcc/RELATORIO_PROGRESSO_E_RETOMADA.md)
+   - [`c:\workspace\Relatório tcc\Fase 5\RELATORIO_PROGRESSO_E_RETOMADA.md`](file:///c:/workspace/Relat%C3%B3rio%20tcc/Fase%205/RELATORIO_PROGRESSO_E_RETOMADA.md)
    - Resumo completo dos Ciclos 1 a 4 concluídos, métodos criados no Java e Python, e ponto exato de retomada (Ciclo 5 — Card 5.1).
 
 5. **Diagramas de Referência**:
@@ -26,7 +26,7 @@ Sempre que uma nova conversa for iniciada neste repositório (`C:\workspace\TCC`
 ## 🎯 Regras de Código e Arquitetura
 
 - **Stack Backend Python (`ai-engine`)**: Python 3.10+, FastAPI (assíncrono), Pydantic v2, Uvicorn, HTTPX, SQLAlchemy 2.0 (Async), PGVector.
-- **Stack Backend Java (`core-api`)**: Java 17, Spring Boot 3 (Web, Data JPA, Validation, PostgreSQL Driver) — **Sem Spring Security/JJWT** (Privacy by Design via `UUID v4`).
+- **Stack Backend Java (`core-api`)**: Java 17, Spring Boot 3 (Web, Data JPA, Validation, PostgreSQL Driver) — Login enxuto via `AuthController` (`user_register` + `farm_history` sem filtros bloqueantes do Spring Security).
 - **Padrão Híbrido no Java**:
   - **Lógica de Negócio e Cálculos Clínicos** (ex: `farmCalc.java`): Escrever em **Java 100% Tradicional** (classes comuns, sem `@`, instanciadas com `new`).
   - **Conexões de Rede e Banco** (`Controller`, `Model`, `Repository`): Usar anotações (`@RestController`, `@Entity`, etc.) para evitar código verboso de infraestrutura.
