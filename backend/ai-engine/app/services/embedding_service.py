@@ -16,17 +16,21 @@ class EmbeddingService:
         self.model = "gemini-embedding-001"
         self.base_url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:embedContent"
         
-    async def get_embedding(self, text: str) -> Optional[List[float]]:
+    async def get_embedding(
+        self, 
+        text: str, 
+        max_retries: int = 3, 
+        initial_backoff: float = 2.0
+    ) -> Optional[List[float]]:
         """
-        Recebe um texto e retorna uma lista de 768 floats (o vetor
-        semântico), ou None caso ocorra erro.
+        Recebe um texto e retorna uma lista de 768 floats (o vetor semântico).
+        Possui retry automático com backoff exponencial para tratar limites de taxa (HTTP 429).
         """
         if not self.api_key:
             logger.error("GEMINI_API_KEY não configurada no arquivo .env.")
             return None
         
         clean_text = text.strip()
-        
         if not clean_text:
             return None
         
@@ -40,22 +44,34 @@ class EmbeddingService:
             "output_dimensionality": 768
         }
         
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(url, headers=headers, json=payload)
-                
-                if response.status_code != 200:
-                    logger.error(f"Erro na API Gemini ({response.status_code}): {response.text}")
-                    return None
-                
-                data = response.json()
-                
-                values = data.get("embedding", {}).get("values")
-                return values
-            
-        except Exception as e: 
-            logger.error(f"Falha de conexão ao gerar o embedding: {str(e)}")
-            return None
+        for attempt in range(max_retries):
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(url, headers=headers, json=payload)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        return data.get("embedding", {}).get("values")
+                    elif response.status_code == 429:
+                        wait_time = initial_backoff * (2 ** attempt)
+                        logger.warning(
+                            f"[RATE-LIMIT 429] Limite da API Gemini atingido. "
+                            f"Tentativa {attempt + 1}/{max_retries}. Aguardando {wait_time:.1f}s antes de retentar..."
+                        )
+                        await asyncio.sleep(wait_time)
+                    else:
+                        logger.error(f"Erro na API Gemini ({response.status_code}): {response.text}")
+                        return None
+            except (httpx.TimeoutException, httpx.NetworkError) as e:
+                wait_time = initial_backoff * (2 ** attempt)
+                logger.warning(f"Instabilidade de rede ao gerar embedding ({e}). Aguardando {wait_time:.1f}s...")
+                await asyncio.sleep(wait_time)
+            except Exception as e:
+                logger.error(f"Falha inesperada ao gerar o embedding: {str(e)}")
+                return None
+
+        logger.error(f"Falha definitiva ao gerar embedding após {max_retries} tentativas.")
+        return None
         
 embedding_service = EmbeddingService()
     

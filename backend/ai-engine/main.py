@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.utils.logger import logger
+from app.api.router import api_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -21,6 +22,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Registra os roteadores da API (/api)
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
 @app.get("/api/health")
 async def health_check():
     return {
@@ -31,6 +36,11 @@ async def health_check():
 
 @app.on_event("startup")
 async def startup_event():
+    from app.db.session import init_db
+    try:
+        await init_db()
+    except Exception as e:
+        logger.warning(f"[STARTUP] Aviso ao inicializar tabelas no banco: {e}")
     logger.info(f"🚀 {settings.PROJECT_NAME} v{settings.VERSION} iniciado com sucesso na porta {settings.PORT}.")
 
 if __name__ == "__main__":
