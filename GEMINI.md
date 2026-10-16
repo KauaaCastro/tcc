@@ -35,6 +35,12 @@ Sempre que uma nova conversa for iniciada neste repositório (`C:\workspace\TCC`
 - **Fallback Seguro**: Nunca inventar simulações fictícias se a IA falhar; responder com `alert_type: "restriction"` e links oficiais pré-aprovados.
 - **Formato de Erro na UI**: Todos os erros devem conter `alert_type` (`"danger"`, `"warning"`, `"restriction"`, `"info"`).
 
+- **Comandos de Validação e Build (`npm run`)**:
+  - `npm run check`: Valida simultaneamente a sintaxe do Python (`ai-engine`) e a compilação Maven do Java (`core-api`).
+  - `npm run check:java`: Compila todas as classes Java 17 (`test-compile`).
+  - `npm run check:python`: Verifica sintaxe e imports dos módulos Python (`py_compile`).
+  - `npm run build:java`: Empacota o `.jar` da `core-api`.
+
 ## 📌 Rastreamento Obrigatório de Tarefas e Validação de Etapas
 
 Antes de iniciarmos a próxima tarefa pedida, SEMPRE exiba qual tarefa e etapa exata estamos de acordo com o arquivo no endereço: `\workspace\Relatório tcc\tasks/ tasks.md`

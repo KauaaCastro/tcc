@@ -4,7 +4,6 @@ import com.medinteract.coreapi.model.FarmHistory;
 import com.medinteract.coreapi.model.User;
 import com.medinteract.coreapi.repository.FarmHistoryRepository;
 import com.medinteract.coreapi.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +19,15 @@ import java.util.UUID;
 // Controlador REST para cadastro e login de usuários na tabela 'user_register'
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final UserRepository userRepository;
     private final FarmHistoryRepository farmHistoryRepository;
+
+    public AuthController(UserRepository userRepository, FarmHistoryRepository farmHistoryRepository) {
+        this.userRepository = userRepository;
+        this.farmHistoryRepository = farmHistoryRepository;
+    }
 
     // Cadastra um novo usuário em 'user_register' e inicializa sua ficha em 'farm_history'
     @PostMapping("/register")
@@ -47,19 +50,16 @@ public class AuthController {
         }
 
         UUID novoId = UUID.randomUUID();
-        User novoUsuario = User.builder()
-                .idUsuario(novoId)
-                .apelido(apelido.replace("<", "").replace(">", "").trim())
-                .email(emailLimpo)
-                .password(gerarHashSenha(password))
-                .build();
+        User novoUsuario = new User(
+                novoId,
+                apelido.replace("<", "").replace(">", "").trim(),
+                emailLimpo,
+                gerarHashSenha(password)
+        );
 
         User usuarioSalvo = userRepository.save(novoUsuario);
 
-        FarmHistory fichaInicial = FarmHistory.builder()
-                .userId(novoId)
-                .gestanteLactante(false)
-                .build();
+        FarmHistory fichaInicial = new FarmHistory(novoId);
         FarmHistory fichaSalva = farmHistoryRepository.save(fichaInicial);
 
         Map<String, Object> resposta = new LinkedHashMap<>();

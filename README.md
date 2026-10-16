@@ -151,10 +151,28 @@ No terminal, execute:
 docker-compose up --build
 ```
 
-### **Passo 3: Acessar a Plataforma**
+### **Passo 3: Comandos de Verificação de Build e Sintaxe (`npm run`)**
+Na raiz do projeto (`C:\workspace\tcc`), você pode validar a compilação do Java (`core-api`) e a sintaxe do Python (`ai-engine`) a qualquer momento com os scripts do [`package.json`](file:///C:/workspace/tcc/package.json):
+
+```bash
+# Verifica de uma só vez a sintaxe do Python (ai-engine) + compilação Maven do Java (core-api)
+npm run check
+
+# Verifica apenas os módulos Python (FastAPI / SQLAlchemy / RAG)
+npm run check:python
+
+# Compila todas as classes Java 17 (Spring Boot 3) via Maven test-compile
+npm run check:java
+
+# Empacota o arquivo .jar final da Core API Java
+npm run build:java
+```
+
+### **Passo 4: Acessar a Plataforma**
 Abra o navegador no endereço:  
 👉 **`http://localhost`** (Interface Gráfica)  
-👉 **`http://localhost:5000/docs`** (Documentação Interativa da API Swagger)
+👉 **`http://localhost:8080/api/core/health`** (Core API Java — Spring Boot 3)  
+👉 **`http://localhost:5000/docs`** (Documentação Interativa da API Python — Swagger)
 
 ---
 

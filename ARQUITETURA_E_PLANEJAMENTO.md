@@ -126,3 +126,14 @@ C:\workspace\TCC\
 1. Orquestração completa no `docker-compose.yml` (`postgres-db`, `ai-engine`, `core-api`).
 2. Testes de ponta a ponta com casos reais de interação medicamentosa.
 3. Defesa do TCC com arquitetura poliglota validada.
+
+---
+
+## 🧪 5. Comandos de Verificação de Build e Sintaxe (`package.json`)
+
+Na raiz do projeto (`C:\workspace\TCC`), utilize os scripts configurados no `package.json` para validar o código durante o desenvolvimento:
+
+- **`npm run check`**: Verifica de uma só vez a sintaxe do Python (`ai-engine`) e a compilação Maven do Java (`core-api`).
+- **`npm run check:python`**: Executa `python -m py_compile` nos módulos principais do FastAPI.
+- **`npm run check:java`**: Executa o Maven `test-compile` nas classes Java 17 do Spring Boot.
+- **`npm run build:java`**: Gera o pacote `.jar` final da aplicação `core-api`.

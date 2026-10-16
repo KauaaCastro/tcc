@@ -6,7 +6,6 @@ import com.medinteract.coreapi.model.UserHistory;
 import com.medinteract.coreapi.repository.FarmHistoryRepository;
 import com.medinteract.coreapi.repository.UserHistoryRepository;
 import com.medinteract.coreapi.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,12 +19,21 @@ import java.util.UUID;
 // Controlador REST para salvar e buscar a ficha clínica (FarmHistory) e o registro do usuário (UserRegister)
 @RestController
 @RequestMapping({"/api/perfil", "/perfil"})
-@RequiredArgsConstructor
 public class PerfilController {
 
     private final UserRepository userRepository;
     private final FarmHistoryRepository farmHistoryRepository;
     private final UserHistoryRepository userHistoryRepository;
+
+    public PerfilController(
+            UserRepository userRepository,
+            FarmHistoryRepository farmHistoryRepository,
+            UserHistoryRepository userHistoryRepository
+    ) {
+        this.userRepository = userRepository;
+        this.farmHistoryRepository = farmHistoryRepository;
+        this.userHistoryRepository = userHistoryRepository;
+    }
 
     // Salva ou atualiza (Upsert) o usuário em 'user_register' e a ficha clínica em 'farm_history'
     @PostMapping
@@ -41,16 +49,16 @@ public class PerfilController {
         String apelido = sanitizarTexto((String) payload.get("apelido"), "Paciente");
 
         // Preserva email e senha caso o usuário já esteja cadastrado em 'user_register'
-        User usuario = userRepository.findById(idUsuario).orElseGet(() -> User.builder()
-                .idUsuario(idUsuario)
-                .build());
+        User usuario = userRepository.findById(idUsuario).orElseGet(() -> {
+            User novo = new User();
+            novo.setIdUsuario(idUsuario);
+            return novo;
+        });
         usuario.setApelido(apelido);
         userRepository.save(usuario);
 
         // Monta e salva os dados clínicos na tabela 'farm_history'
-        FarmHistory ficha = farmHistoryRepository.findById(idUsuario).orElseGet(() -> FarmHistory.builder()
-                .userId(idUsuario)
-                .build());
+        FarmHistory ficha = farmHistoryRepository.findById(idUsuario).orElseGet(() -> new FarmHistory(idUsuario));
 
         if (payload.get("idade") != null) {
             ficha.setIdade(Integer.valueOf(payload.get("idade").toString()));
