@@ -1,3 +1,5 @@
+import re
+import unicodedata
 from typing import List, Dict, Any, Optional
 from uuid import UUID
 from sqlalchemy import select, desc
@@ -14,28 +16,91 @@ from app.utils.logger import logger
 # Serviço de busca vetorial (RAG) e persistência do usuário, ficha clínica (FarmHistory) e histórico
 class RAGService:
 
-    # Busca os top_k trechos de bulas mais próximos por distância de cosseno (<=>)
+    # Remove acentos para compatibilizar a busca ILIKE com o nome limpo das bulas no banco
+    @staticmethod
+    def _strip_accents(text: str) -> str:
+        normalized = unicodedata.normalize("NFKD", text or "")
+        return "".join(c for c in normalized if not unicodedata.combining(c))
+
+    # Extrai possíveis nomes de fármacos da pergunta para garantir cobertura em interações
+    @classmethod
+    def _extract_candidate_terms(cls, query: str, medications: Optional[List[str]] = None) -> List[str]:
+        stopwords = {
+            "posso", "tomar", "usar", "junto", "juntos", "entre", "interacao", "interacoes",
+            "efeito", "efeitos", "colateral", "colaterais", "reacao", "reacoes", "risco",
+            "riscos", "bula", "remedio", "remedios", "medicamento", "medicamentos", "comprimido",
+            "gotas", "xarope", "para", "serve", "como", "qual", "quais", "quando", "porque",
+            "tenho", "estou", "fazer", "causa", "pode", "podem", "deve", "devem", "adulto",
+            "crianca", "idoso", "gestante", "gravida", "lactante", "pressao", "diabetes",
+            "problema", "problemas", "saude", "alergia", "dose", "dosagem", "posologia"
+        }
+        candidates: List[str] = []
+        for med in (medications or []):
+            clean = cls._strip_accents(str(med).strip())
+            if len(clean) >= 3 and clean.lower() not in [c.lower() for c in candidates]:
+                candidates.append(clean)
+
+        tokens = re.findall(r"[A-Za-zÀ-ÿ]{5,}", query or "")
+        for token in tokens:
+            clean_token = cls._strip_accents(token)
+            low = clean_token.lower()
+            if low not in stopwords and low not in [c.lower() for c in candidates]:
+                candidates.append(clean_token)
+        return candidates[:5]
+
+    # Busca os top_k trechos de bulas mais próximos por distância de cosseno (<=>), equilibrando múltiplos medicamentos
     async def search_relevant_chunks(
         self,
         query: str,
-        top_k: int = 4
+        top_k: int = 4,
+        medications: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
-        query_vector = await embedding_service.get_embedding(query)
+        meds_clean = [str(m).strip() for m in (medications or []) if m and str(m).strip()]
+        enriched_query = f"{', '.join(meds_clean)}: {query}" if meds_clean else query
+        query_vector = await embedding_service.get_embedding(
+            enriched_query, task_type="RETRIEVAL_QUERY"
+        )
 
         if not query_vector:
             logger.warning(f"Não foi possível gerar embedding para a pergunta: '{query}'")
             return []
 
-        async with AsyncSessionLocal() as session:
-            stmt = (
-                select(BulaChunk)
-                .order_by(BulaChunk.embedding.cosine_distance(query_vector))
-                .limit(top_k)
-            )
+        candidates = self._extract_candidate_terms(query, meds_clean)
+        collected: List[BulaChunk] = []
+        seen_ids = set()
 
-            result = await session.execute(stmt)
-            chunks = result.scalars().all()
-            return [chunk.to_dict() for chunk in chunks]
+        async with AsyncSessionLocal() as session:
+            if candidates:
+                per_med_k = 2 if len(candidates) > 1 else top_k
+                for term in candidates:
+                    stmt_med = (
+                        select(BulaChunk)
+                        .where(BulaChunk.med_name.ilike(f"%{term}%"))
+                        .order_by(BulaChunk.embedding.cosine_distance(query_vector))
+                        .limit(per_med_k)
+                    )
+                    res_med = await session.execute(stmt_med)
+                    for chunk in res_med.scalars().all():
+                        if chunk.id not in seen_ids:
+                            seen_ids.add(chunk.id)
+                            collected.append(chunk)
+
+            remaining = max(0, top_k - len(collected))
+            if remaining > 0:
+                stmt_global = (
+                    select(BulaChunk)
+                    .order_by(BulaChunk.embedding.cosine_distance(query_vector))
+                    .limit(top_k + len(seen_ids))
+                )
+                res_global = await session.execute(stmt_global)
+                for chunk in res_global.scalars().all():
+                    if chunk.id not in seen_ids:
+                        seen_ids.add(chunk.id)
+                        collected.append(chunk)
+                        if len(collected) >= top_k:
+                            break
+
+            return [chunk.to_dict() for chunk in collected[: max(top_k, len(collected))]]
 
     # Consulta o registro do usuário (UserRegister) e sua ficha clínica (FarmHistory) pelo UUID
     async def get_perfil_usuario(self, id_usuario: Optional[UUID]) -> Optional[Dict[str, Any]]:

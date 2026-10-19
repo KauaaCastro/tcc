@@ -1,37 +1,37 @@
 import re
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 from app.schemas.chat import AlertType
 from app.utils.logger import logger
 
 
+# Serviço de barreira e contenção de escopo clínico (Guardrails)
 class GuardrailService:
-    """
-    Serviço de barreira e contenção de escopo clínico (Guardrails).
-    Garante que o MedInteract processe apenas perguntas pertinentes
-    à farmacologia, medicamentos, interações e saúde humana.
-    """
 
     def __init__(self):
-        # 1. Termos e radicais clínicos que indicam legitimidade médica
+        # Termos clínicos e farmacêuticos que indicam legitimidade médica
         self.health_keywords = {
-            # Vocabulário farmacêutico comum
-            "remedio", "medicamento", "farmaco", "bula", "posologia", "dosagem",
-            "dose", "comprimido", "capsula", "gotas", "xarope", "pomada", "injecao",
-            "mg", "ml", "interacao", "interagir", "contraindicacao", "efeito",
-            "colateral", "adverso", "reacao", "alergia", "superdosagem",
-            
-            # Sintomas e condições clínicas frequentes
-            "dor", "febre", "infeccao", "inflamacao", "pressao", "hipertensao",
-            "diabetes", "colesterol", "estomago", "figado", "rim", "renal",
-            "gravidez", "gravida", "lactante", "amamentacao", "crianca", "idoso",
-            "sono", "ansiedade", "insonia", "nausea", "vomito", "diarreia",
-            
-            # Verbos e ações de uso clínico
-            "tomar", "beber", "ingerir", "misturar", "junto", "associar",
-            "prescricao", "receita", "medico", "farmaceutico"
+            "remedio", "remedios", "medicamento", "medicamentos", "farmaco", "bula",
+            "posologia", "dosagem", "dose", "comprimido", "capsula", "gotas", "xarope",
+            "pomada", "injecao", "mg", "ml", "mcg", "interacao", "interacoes", "interagir",
+            "contraindicacao", "contraindicacoes", "efeito", "efeitos", "colateral",
+            "colaterais", "adverso", "adversos", "reacao", "reacoes", "alergia", "superdosagem",
+            "dor", "dores", "febre", "infeccao", "inflamacao", "pressao", "hipertensao",
+            "diabetes", "colesterol", "estomago", "figado", "hepatico", "rim", "renal",
+            "gravidez", "gravida", "gestante", "lactante", "amamentacao", "crianca",
+            "pediatrico", "idoso", "adulto", "sono", "ansiedade", "insonia", "nausea",
+            "vomito", "diarreia", "tontura", "sangramento", "rabdomiolise", "muscular",
+            "tomar", "beber", "ingerir", "misturar", "mistura", "junto", "juntos",
+            "associar", "combinar", "prescricao", "receita", "medico", "farmaceutico",
+            "serve", "indicado", "indicacao", "tratamento", "tratar", "usar", "uso",
+            "sintoma", "sintomas", "doenca", "saude", "paciente", "clareance", "clearance"
         }
 
-        # 2. Termos flagrantes de fuga de assunto (fora do contexto de saúde)
+        # Sufixos farmacológicos típicos da DCB/ANVISA (ex: dipirona, sinvastatina, omeprazol)
+        self.drug_suffix_pattern = re.compile(
+            r"\b\w{3,}(ina|zol|pril|sartana|statina|cilina|floxacino|pam|lol|dipino|profeno|ofenaco|micina|vir|mab|ida|ona|ato|ol)\b"
+        )
+
+        # Termos flagrantes de fuga de assunto (fora do contexto de saúde)
         self.off_topic_patterns = [
             r"\b(receita de bolo|culinaria|futebol|campeonato|tabela do brasileirao)\b",
             r"\b(filme|cinema|musica|poema|poesia|piada|horoscopo|signo)\b",
@@ -40,8 +40,8 @@ class GuardrailService:
             r"\b(criptomoeda|bitcoin|investimento|bolsa de valores)\b"
         ]
 
+    # Remove acentuações e caracteres especiais para comparação flexível
     def _normalize_text(self, text: str) -> str:
-        """Remove acentuações e caracteres especiais para comparação flexível."""
         replacements = {
             'á': 'a', 'à': 'a', 'ã': 'a', 'â': 'a', 'é': 'e', 'ê': 'e',
             'í': 'i', 'ó': 'o', 'ô': 'o', 'õ': 'o', 'ú': 'u', 'ç': 'c'
@@ -51,16 +51,15 @@ class GuardrailService:
             normalized = normalized.replace(char, repl)
         return normalized
 
-    def validate_scope(self, question: str) -> Tuple[bool, Optional[str], Optional[AlertType]]:
-        """
-        Avalia se a pergunta está no escopo de saúde e farmacologia.
-        
-        Retorna:
-            (is_valid: bool, mensagem_bloqueio: Optional[str], alert_type: Optional[AlertType])
-        """
+    # Avalia se a pergunta e os medicamentos informados estão no escopo farmacológico
+    def validate_scope(
+        self,
+        question: str,
+        medications: Optional[List[str]] = None
+    ) -> Tuple[bool, Optional[str], Optional[AlertType]]:
         normalized = self._normalize_text(question)
 
-        # 1. Checagem de Fuga Flagrante de Assunto
+        # 1. Checagem de fuga flagrante de assunto
         for pattern in self.off_topic_patterns:
             if re.search(pattern, normalized):
                 logger.info(f"[GUARDRAIL] Pergunta bloqueada por fuga flagrante: '{question[:60]}...'")
@@ -72,11 +71,12 @@ class GuardrailService:
                     AlertType.INFO
                 )
 
-        # 2. Checagem de Relevância por Palavras-Chave de Saúde
+        # 2. Checagem de relevância por palavras-chave, sufixos de fármacos ou chips selecionados
         words = set(re.findall(r"\b\w+\b", normalized))
-        has_health_context = bool(words & self.health_keywords)
+        has_med_chips = bool(medications and any(str(m).strip() for m in medications))
+        has_drug_suffix = bool(self.drug_suffix_pattern.search(normalized))
+        has_health_context = bool(words & self.health_keywords) or has_drug_suffix or has_med_chips
 
-        # Se a pergunta tem mais de 4 palavras e nenhuma relação médica, sugere reformulação
         if len(words) >= 4 and not has_health_context:
             logger.info(f"[GUARDRAIL] Pergunta fora do contexto de saúde: '{question[:60]}...'")
             return (
@@ -87,11 +87,9 @@ class GuardrailService:
                 AlertType.INFO
             )
 
-        # Pergunta aprovada para processamento no RAG
         return (True, None, None)
 
 
-# Instância global reutilizável
 guardrail_service = GuardrailService()
 
 

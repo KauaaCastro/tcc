@@ -32,13 +32,13 @@ dataBase:
 	docker-compose exec postgres-db psql -U postgres -d medinteract
 
 seed: 
-	docker-compose exec backend python app/db/seed.py
+	docker-compose exec ai-engine python -m app.db.seed
 
 test: 
-	docker-compose exec backend pytest
+	docker-compose exec ai-engine pytest
 
 lint: 
-	docker-compose exec backend flake8 app
+	docker-compose exec ai-engine flake8 app
 
 clean: 
 	python -c "import pathlib, shutil; [shutil.rmtree(p) for p in pathlib.Path('.').rglob('__pycache__') if p.is_dir()]"
