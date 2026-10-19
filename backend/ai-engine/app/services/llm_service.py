@@ -66,9 +66,10 @@ class LLMService:
             "Content-Type": "application/json",
         }
         payload = self._build_payload(system_prompt, user_question)
-        models_to_try = [self.model]
-        if self.fallback_model and self.fallback_model != self.model:
-            models_to_try.append(self.fallback_model)
+        models_to_try = []
+        for candidate in (self.model, self.fallback_model, "gemini-3.5-flash-lite", "gemini-3.8-flash"):
+            if candidate and candidate not in models_to_try:
+                models_to_try.append(candidate)
 
         last_error = "Serviço de IA indisponível."
         for model_name in models_to_try:
@@ -76,10 +77,10 @@ class LLMService:
             for attempt in range(2):
                 emitted_any = False
                 try:
-                    async with httpx.AsyncClient(timeout=60.0) as client:
+                    async with httpx.AsyncClient(timeout=httpx.Timeout(25.0, connect=10.0)) as client:
                         async with client.stream("POST", url, headers=headers, json=payload) as response:
                             if response.status_code in (429, 503) and attempt == 0:
-                                wait_s = 1.5 * (attempt + 1)
+                                wait_s = 1.0
                                 logger.warning(f"[LLM] Status {response.status_code} em {model_name}. Retentando em {wait_s}s...")
                                 await asyncio.sleep(wait_s)
                                 continue

@@ -1,3 +1,9 @@
+import os
+import sys
+
+# Garante que o diretório raiz do ai-engine esteja no sys.path ao rodar os testes
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from app.schemas.chat import AlertType, ProfileType
 from app.services.guardrail_service import guardrail_service
 from app.services.prompt_service import PromptService, prompt_service

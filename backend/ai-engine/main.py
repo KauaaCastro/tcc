@@ -1,4 +1,12 @@
 from contextlib import asynccontextmanager
+import os
+import sys
+
+# Garante que o diretório base do ai-engine esteja no sys.path para resolver os imports de 'app'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -61,6 +69,8 @@ if __name__ == "__main__":
         "main:app",
         host="0.0.0.0",
         port=settings.PORT,
-        reload=True
+        reload=True,
+        app_dir=BASE_DIR,
     )
+
 
