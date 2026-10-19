@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from app.schemas.chat import ProfileType
+from app.schemas.chat import ProfileType, AlertType
 
 
 # Orquestra o Prompt Sanduíche com sanitização XML e cálculo de IMC
@@ -8,6 +8,16 @@ class PromptService:
 
     def __init__(self):
         self.prompts_dir = Path(__file__).resolve().parent.parent / "prompts"
+
+    # Carrega as diretrizes de perfil (patient.txt ou professional.txt)
+    def load_profile_guidelines(self, profile: ProfileType) -> str:
+        filename = "professional.txt" if profile == ProfileType.PROFESSIONAL else "patient.txt"
+        file_path = self.prompts_dir / filename
+        if file_path.exists():
+            return file_path.read_text(encoding="utf-8").strip()
+        if profile == ProfileType.PROFESSIONAL:
+            return "Adapte a profundidade técnica para um PROFISSIONAL DE SAÚDE (farmacodinâmica, farmacocinética e mecanismos da bula)."
+        return "Adapte a linguagem de forma clara, acolhedora e acessível para um PACIENTE, mantendo rigor técnico."
 
     # Remove '<' e '>' das entradas do usuário para evitar Prompt Injection
     @staticmethod
@@ -27,6 +37,18 @@ class PromptService:
         except (ValueError, TypeError, ZeroDivisionError):
             pass
         return "Não calculado (peso/altura não informados)"
+
+    # Identifica o nível de alerta clínico ([DANGER], [WARNING], [INFO]) no texto gerado pela IA
+    @staticmethod
+    def detect_alert_type(response_text: str) -> AlertType:
+        if not response_text:
+            return AlertType.INFO
+        upper = response_text[:300].upper()
+        if "[DANGER]" in upper or "CONTRAINDICA" in upper or "RISCO GRAVE" in upper:
+            return AlertType.DANGER
+        if "[WARNING]" in upper or "CAUTELA" in upper or "ATENÇÃO" in upper:
+            return AlertType.WARNING
+        return AlertType.INFO
 
     # Formata os trechos de bula recuperados do PGVector para a tag <bula>
     def format_retrieved_context(self, chunks: List[Dict[str, Any]]) -> str:
@@ -88,20 +110,19 @@ class PromptService:
         retrieved_chunks: List[Dict[str, Any]],
         perfil_data: Optional[Dict[str, Any]] = None,
         profile: ProfileType = ProfileType.PATIENT,
+        medications: Optional[List[str]] = None,
     ) -> str:
         perfil_tag = self.format_perfil_paciente_tag(perfil_data)
         bula_context = self.format_retrieved_context(retrieved_chunks)
         pergunta_limpa = self.sanitize_xml(question, "")
+        meds_clean = [self.sanitize_xml(m, "") for m in (medications or []) if m and str(m).strip()]
+        if meds_clean:
+            pergunta_limpa = f"Medicamentos selecionados: {', '.join(meds_clean)}\nDúvida: {pergunta_limpa}"
 
-        tom_audiencia = (
-            "Adapte a profundidade técnica para um PROFISSIONAL DE SAÚDE (detalhando farmacodinâmica, farmacocinética e mecanismos descritos na bula)."
-            if profile == ProfileType.PROFESSIONAL
-            else "Adapte a linguagem de forma clara, acolhedora e acessível para um PACIENTE, mantendo rigor técnico."
-        )
+        diretrizes_perfil = self.load_profile_guidelines(profile)
 
         return (
-            "Você é um farmacêutico clínico especialista em análise de bulas oficiais da ANVISA.\n"
-            f"{tom_audiencia}\n\n"
+            f"{diretrizes_perfil}\n\n"
             "REGRAS DE OURO E RESTRIÇÕES NEGATIVAS:\n"
             "1. GROUNDING (ANCORAGEM): Responda ESTRITAMENTE com base nas informações contidas dentro da tag <bula>. NÃO utilize conhecimentos externos, memória prévia ou suposições fora do texto fornecido.\n"
             "2. PROIBIÇÃO DE DIAGNÓSTICO: Nunca realize diagnósticos clínicos e nunca deduza causas de sintomas combinando fatores externos que não estejam previstos na bula. Utilize os dados da tag <perfil_paciente> EXCLUSIVAMENTE como um filtro de leitura para destacar alertas que já estejam literalmente escritos na <bula>.\n"
@@ -132,12 +153,14 @@ class PromptService:
         retrieved_chunks: List[Dict[str, Any]],
         question: str = "",
         perfil_data: Optional[Dict[str, Any]] = None,
+        medications: Optional[List[str]] = None,
     ) -> str:
         return self.build_sandwich_prompt(
             question=question,
             retrieved_chunks=retrieved_chunks,
             perfil_data=perfil_data,
             profile=profile,
+            medications=medications,
         )
 
 

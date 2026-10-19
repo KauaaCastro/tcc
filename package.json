@@ -2,11 +2,16 @@
   "name": "medinteract-workspace",
   "private": true,
   "version": "1.0.0",
-  "description": "Scripts de verificação de build e sintaxe do ecossistema MedInteract (Java + Python)",
+  "description": "Scripts de verificação de build e execução do ecossistema MedInteract (Java + Python + React)",
   "scripts": {
-    "check": "npm run check:python && npm run check:java",
-    "check:python": "python -m py_compile backend/ai-engine/main.py backend/ai-engine/app/db/models.py backend/ai-engine/app/db/session.py backend/ai-engine/app/services/rag_service.py backend/ai-engine/app/services/prompt_service.py backend/ai-engine/app/api/endpoints/chat.py",
+    "check": "npm run check:python && npm run check:java && npm run check:frontend",
+    "check:python": "powershell -NoProfile -Command \"& 'backend/ai-engine/.venv/Scripts/python.exe' -m py_compile backend/ai-engine/main.py backend/ai-engine/cli_chat.py backend/ai-engine/app/db/models.py backend/ai-engine/app/db/session.py backend/ai-engine/app/services/rag_service.py backend/ai-engine/app/services/prompt_service.py backend/ai-engine/app/api/endpoints/chat.py; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & 'backend/ai-engine/.venv/Scripts/python.exe' backend/ai-engine/tests/test_backend_core.py\"",
     "check:java": "powershell -NoProfile -Command \"& \\\"$env:USERPROFILE\\.m2\\wrapper\\dists\\apache-maven-3.8.5-bin\\5i5jha092a3i37g0paqnfr15e0\\apache-maven-3.8.5\\bin\\mvn.cmd\\\" -f backend/core-api/pom.xml test-compile\"",
+    "check:frontend": "npm --prefix frontend run check",
+    "chat": "powershell -NoProfile -Command \"& 'backend/ai-engine/.venv/Scripts/python.exe' backend/ai-engine/cli_chat.py\"",
+    "dev:ai": "powershell -NoProfile -Command \"& 'backend/ai-engine/.venv/Scripts/python.exe' backend/ai-engine/main.py\"",
+    "dev:java": "powershell -NoProfile -Command \"& \\\"$env:USERPROFILE\\.m2\\wrapper\\dists\\apache-maven-3.8.5-bin\\5i5jha092a3i37g0paqnfr15e0\\apache-maven-3.8.5\\bin\\mvn.cmd\\\" -f backend/core-api/pom.xml spring-boot:run\"",
+    "dev:frontend": "npm --prefix frontend run dev",
     "build:java": "powershell -NoProfile -Command \"& \\\"$env:USERPROFILE\\.m2\\wrapper\\dists\\apache-maven-3.8.5-bin\\5i5jha092a3i37g0paqnfr15e0\\apache-maven-3.8.5\\bin\\mvn.cmd\\\" -f backend/core-api/pom.xml package -DskipTests\""
   }
 }
