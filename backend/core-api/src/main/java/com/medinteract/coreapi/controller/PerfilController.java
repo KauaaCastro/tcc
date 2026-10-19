@@ -6,6 +6,8 @@ import com.medinteract.coreapi.model.UserHistory;
 import com.medinteract.coreapi.repository.FarmHistoryRepository;
 import com.medinteract.coreapi.repository.UserHistoryRepository;
 import com.medinteract.coreapi.repository.UserRepository;
+import com.medinteract.coreapi.service.TokenService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +26,8 @@ public class PerfilController {
     private final UserRepository userRepository;
     private final FarmHistoryRepository farmHistoryRepository;
     private final UserHistoryRepository userHistoryRepository;
+    // Instanciação tradicional com 'new' seguindo o Padrão Híbrido do projeto
+    private final TokenService tokenService = new TokenService();
 
     public PerfilController(
             UserRepository userRepository,
@@ -37,15 +41,24 @@ public class PerfilController {
 
     // Salva ou atualiza (Upsert) o usuário em 'user_register' e a ficha clínica em 'farm_history'
     @PostMapping
-    public ResponseEntity<Map<String, Object>> salvarOuAtualizarPerfil(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<Map<String, Object>> salvarOuAtualizarPerfil(
+            @RequestBody Map<String, Object> payload,
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
         Object idObj = payload.get("idUsuario") != null ? payload.get("idUsuario") : payload.get("userId");
-        if (idObj == null) {
+        UUID idUsuario = parseUuidSeguro(idObj);
+        if (idUsuario == null) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "erro", "O campo 'idUsuario' (UUID v4) é obrigatório."
+                    "erro", "O campo 'idUsuario' deve ser um UUID v4 válido.",
+                    "alert_type", "warning"
             ));
         }
 
-        UUID idUsuario = UUID.fromString(idObj.toString());
+        ResponseEntity<Map<String, Object>> erroAuth = validarAcessoToken(authHeader, idUsuario);
+        if (erroAuth != null) {
+            return erroAuth;
+        }
+
         String apelido = sanitizarTexto((String) payload.get("apelido"), "Paciente");
 
         // Preserva email e senha caso o usuário já esteja cadastrado em 'user_register'
@@ -60,32 +73,40 @@ public class PerfilController {
         // Monta e salva os dados clínicos na tabela 'farm_history'
         FarmHistory ficha = farmHistoryRepository.findById(idUsuario).orElseGet(() -> new FarmHistory(idUsuario));
 
-        if (payload.get("idade") != null) {
-            ficha.setIdade(Integer.valueOf(payload.get("idade").toString()));
+        Integer idadeVal = parseInteiroSeguro(payload.get("idade"));
+        if (idadeVal != null) {
+            ficha.setIdade(idadeVal);
         }
-        if (payload.get("peso") != null) {
-            ficha.setPeso(new BigDecimal(payload.get("peso").toString()));
+        BigDecimal pesoVal = parseDecimalSeguro(payload.get("peso"));
+        if (pesoVal != null) {
+            ficha.setPeso(pesoVal);
         }
-        if (payload.get("altura") != null) {
-            ficha.setAltura(new BigDecimal(payload.get("altura").toString()));
+        BigDecimal alturaVal = parseDecimalSeguro(payload.get("altura"));
+        if (alturaVal != null) {
+            ficha.setAltura(alturaVal);
         }
         if (payload.get("gestanteLactante") != null) {
             ficha.setGestanteLactante(Boolean.valueOf(payload.get("gestanteLactante").toString()));
         }
         if (payload.containsKey("alergias")) {
-            ficha.setAlergias(sanitizarTexto((String) payload.get("alergias"), null));
+            ficha.setAlergias(sanitizarTexto(
+                    payload.get("alergias") != null ? payload.get("alergias").toString() : null, null));
         }
         if (payload.containsKey("problemasSaude")) {
-            ficha.setProblemasSaude(sanitizarTexto((String) payload.get("problemasSaude"), null));
+            ficha.setProblemasSaude(sanitizarTexto(
+                    payload.get("problemasSaude") != null ? payload.get("problemasSaude").toString() : null, null));
         }
         if (payload.containsKey("medicacoesContinuas")) {
-            ficha.setMedicacoesContinuas(sanitizarTexto((String) payload.get("medicacoesContinuas"), null));
+            ficha.setMedicacoesContinuas(sanitizarTexto(
+                    payload.get("medicacoesContinuas") != null ? payload.get("medicacoesContinuas").toString() : null, null));
         }
         if (payload.containsKey("praticaEsportes")) {
-            ficha.setPraticaEsportes(sanitizarTexto((String) payload.get("praticaEsportes"), null));
+            ficha.setPraticaEsportes(sanitizarTexto(
+                    payload.get("praticaEsportes") != null ? payload.get("praticaEsportes").toString() : null, null));
         }
-        if (payload.get("horasSono") != null) {
-            ficha.setHorasSono(new BigDecimal(payload.get("horasSono").toString()));
+        BigDecimal sonoVal = parseDecimalSeguro(payload.get("horasSono"));
+        if (sonoVal != null) {
+            ficha.setHorasSono(sonoVal);
         }
 
         FarmHistory fichaSalva = farmHistoryRepository.save(ficha);
@@ -101,7 +122,15 @@ public class PerfilController {
 
     // Retorna os dados do usuário ('user_register'), ficha clínica ('farm_history') e histórico
     @GetMapping("/{idUsuario}")
-    public ResponseEntity<Map<String, Object>> carregarPerfilEHistorico(@PathVariable UUID idUsuario) {
+    public ResponseEntity<Map<String, Object>> carregarPerfilEHistorico(
+            @PathVariable UUID idUsuario,
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        ResponseEntity<Map<String, Object>> erroAuth = validarAcessoToken(authHeader, idUsuario);
+        if (erroAuth != null) {
+            return erroAuth;
+        }
+
         Optional<User> optUser = userRepository.findById(idUsuario);
         Optional<FarmHistory> optFicha = farmHistoryRepository.findById(idUsuario);
 
@@ -121,11 +150,76 @@ public class PerfilController {
         return ResponseEntity.ok(resposta);
     }
 
+    // Valida a titularidade do token HMAC-SHA256 quando enviado no cabeçalho Authorization
+    private ResponseEntity<Map<String, Object>> validarAcessoToken(String authHeader, UUID idUsuarioAlvo) {
+        boolean enforceToken = "true".equalsIgnoreCase(System.getenv("ENFORCE_AUTH_TOKEN"));
+        if (authHeader == null || authHeader.isBlank()) {
+            if (enforceToken) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                        "erro", "Cabeçalho Authorization Bearer é obrigatório.",
+                        "alert_type", "restriction"
+                ));
+            }
+            return null;
+        }
+
+        UUID tokenUserId = tokenService.validateTokenAndGetUserId(authHeader);
+        if (tokenUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "erro", "Token de autenticação inválido ou expirado.",
+                    "alert_type", "restriction"
+            ));
+        }
+        if (!tokenUserId.equals(idUsuarioAlvo)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "erro", "Acesso negado: o token informado pertence a outro usuário.",
+                    "alert_type", "restriction"
+            ));
+        }
+        return null;
+    }
+
     // Limpa caracteres XML ('<' e '>') das entradas de texto livre
     private String sanitizarTexto(String texto, String valorPadrao) {
         if (texto == null || texto.isBlank()) {
             return valorPadrao;
         }
         return texto.replace("<", "").replace(">", "").trim();
+    }
+
+    // Converte UUID de forma segura retornando null caso o formato seja inválido
+    private UUID parseUuidSeguro(Object valor) {
+        if (valor == null || valor.toString().isBlank()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(valor.toString().trim());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    // Converte inteiro de forma segura ignorando strings vazias ou inválidas
+    private Integer parseInteiroSeguro(Object valor) {
+        if (valor == null || valor.toString().isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(valor.toString().trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    // Converte BigDecimal de forma segura ignorando strings vazias ou inválidas
+    private BigDecimal parseDecimalSeguro(Object valor) {
+        if (valor == null || valor.toString().isBlank()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(valor.toString().trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

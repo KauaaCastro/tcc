@@ -4,13 +4,11 @@ import com.medinteract.coreapi.model.FarmHistory;
 import com.medinteract.coreapi.model.User;
 import com.medinteract.coreapi.repository.FarmHistoryRepository;
 import com.medinteract.coreapi.repository.UserRepository;
+import com.medinteract.coreapi.service.TokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -23,13 +21,15 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final FarmHistoryRepository farmHistoryRepository;
+    // Instanciação tradicional com 'new' seguindo o Padrão Híbrido do projeto
+    private final TokenService tokenService = new TokenService();
 
     public AuthController(UserRepository userRepository, FarmHistoryRepository farmHistoryRepository) {
         this.userRepository = userRepository;
         this.farmHistoryRepository = farmHistoryRepository;
     }
 
-    // Cadastra um novo usuário em 'user_register' e inicializa sua ficha em 'farm_history'
+    // Cadastra um novo usuário em 'user_register' com BCrypt e inicializa sua ficha em 'farm_history'
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> cadastrarUsuario(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
@@ -54,24 +54,26 @@ public class AuthController {
                 novoId,
                 apelido.replace("<", "").replace(">", "").trim(),
                 emailLimpo,
-                gerarHashSenha(password)
+                tokenService.hashPassword(password)
         );
 
         User usuarioSalvo = userRepository.save(novoUsuario);
 
         FarmHistory fichaInicial = new FarmHistory(novoId);
         FarmHistory fichaSalva = farmHistoryRepository.save(fichaInicial);
+        String token = tokenService.generateToken(usuarioSalvo.getIdUsuario());
 
         Map<String, Object> resposta = new LinkedHashMap<>();
         resposta.put("mensagem", "Usuário cadastrado com sucesso.");
         resposta.put("idUsuario", usuarioSalvo.getIdUsuario());
+        resposta.put("token", token);
         resposta.put("usuario", usuarioSalvo);
         resposta.put("perfil", fichaSalva);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
     }
 
-    // Autentica o usuário validando email e senha e retorna seu UUID e ficha clínica
+    // Autentica o usuário validando email e senha (BCrypt) e retorna seu UUID, token HMAC e ficha clínica
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> autenticarUsuario(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
@@ -91,36 +93,29 @@ public class AuthController {
         }
 
         User usuario = optUser.get();
-        String hashInformado = gerarHashSenha(password);
-
-        // Aceita tanto senha com hash SHA-256 quanto texto simples (caso inserido manualmente no banco)
-        boolean senhaValida = hashInformado.equals(usuario.getPassword()) || password.equals(usuario.getPassword());
-        if (!senhaValida) {
+        if (!tokenService.verifyPassword(password, usuario.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "erro", "Email ou senha inválidos."
             ));
         }
 
+        // Migra transparentemente hashes legados SHA-256 para BCrypt no primeiro login válido
+        if (tokenService.needsRehash(usuario.getPassword())) {
+            usuario.setPassword(tokenService.hashPassword(password));
+            userRepository.save(usuario);
+        }
+
         FarmHistory ficha = farmHistoryRepository.findById(usuario.getIdUsuario()).orElse(null);
+        String token = tokenService.generateToken(usuario.getIdUsuario());
 
         Map<String, Object> resposta = new LinkedHashMap<>();
         resposta.put("mensagem", "Login realizado com sucesso.");
         resposta.put("idUsuario", usuario.getIdUsuario());
+        resposta.put("token", token);
         resposta.put("usuario", usuario);
         resposta.put("perfil", ficha);
         resposta.put("imcCalculado", ficha != null ? ficha.getImcCalculado() : null);
 
         return ResponseEntity.ok(resposta);
-    }
-
-    // Gera hash SHA-256 da senha usando biblioteca padrão do Java
-    private String gerarHashSenha(String senha) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(senha.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hashBytes);
-        } catch (Exception e) {
-            return senha;
-        }
     }
 }
