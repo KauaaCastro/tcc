@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional
 from uuid import UUID
@@ -56,6 +56,8 @@ class QueryRequest(BaseModel):
 class StreamChunkResponse(BaseModel):
     chunk: str
     alert_type: Optional[AlertType] = Field(default=None)
+    sources: List[str] = Field(default_factory=list)
+    links: List[OfficialLink] = Field(default_factory=list)
     is_final: bool = Field(default=False)
 
 
@@ -64,6 +66,8 @@ class QueryResponse(BaseModel):
     response: str
     sources: List[str] = Field(default_factory=list)
     severity: AlertType = Field(default=AlertType.INFO)
+    alert_type: AlertType = Field(default=AlertType.INFO)
+    links: List[OfficialLink] = Field(default_factory=list)
 
 
 # Metadados de erro e Fallback Seguro para a UI
@@ -73,7 +77,7 @@ class ErrorDetail(BaseModel):
     message: str
     alert_type: AlertType = Field(default=AlertType.DANGER)
     status_code: int = Field(default=500)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     links: List[OfficialLink] = Field(default_factory=list)
 
 
