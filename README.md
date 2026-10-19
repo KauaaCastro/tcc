@@ -1,3 +1,5 @@
+Testando sync entre usuários ->  Kauã, Sofia
+
 # ⚕️ MedInteract — Plataforma de Análise de Interações Medicamentosas com IA & RAG
 
 > **Trabalho de Conclusão de Curso (TCC)**  
