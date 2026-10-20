@@ -19,7 +19,6 @@ import type {
 
 const SESSION_ERRORS = [401, 403, 404];
 
-// Controla a sessão: tela de login (deslogado) ou tela principal com chat (logado)
 export default function App() {
   const { theme, toggleTheme } = useTheme();
   const [session, setSession] = useState<Session | null>(loadSession);
@@ -95,7 +94,7 @@ export default function App() {
   };
 
   if (!session) {
-    return <AuthScreen theme={theme} onToggleTheme={toggleTheme} notice={authNotice} onAuthenticated={handleAuthenticated} />;
+    return <AuthScreen notice={authNotice} onAuthenticated={handleAuthenticated} />;
   }
 
   return (

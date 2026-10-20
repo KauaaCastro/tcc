@@ -14,14 +14,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-// Controlador REST para cadastro e login de usuários na tabela 'user_register'
+// Endpoints de cadastro e login de usuário
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final UserRepository userRepository;
     private final FarmHistoryRepository farmHistoryRepository;
-    // Instanciação tradicional com 'new' seguindo o Padrão Híbrido do projeto
     private final TokenService tokenService = new TokenService();
 
     public AuthController(UserRepository userRepository, FarmHistoryRepository farmHistoryRepository) {
@@ -29,7 +28,13 @@ public class AuthController {
         this.farmHistoryRepository = farmHistoryRepository;
     }
 
-    // Cadastra um novo usuário em 'user_register' com BCrypt e inicializa sua ficha em 'farm_history'
+    private boolean emailValido(String email) {
+        if (email == null) return false;
+        String limpo = email.trim().toLowerCase();
+        int posArroba = limpo.indexOf('@');
+        return posArroba > 0 && limpo.contains(".com") && limpo.indexOf(".com") > posArroba + 1;
+    }
+
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> cadastrarUsuario(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
@@ -38,7 +43,19 @@ public class AuthController {
 
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "erro", "Email e senha são obrigatórios para o cadastro."
+                    "erro", "Informe email e senha para cadastrar."
+            ));
+        }
+
+        if (!emailValido(email)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "erro", "O email deve conter '@' e '.com'."
+            ));
+        }
+
+        if (password.length() < 8) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "erro", "A senha deve ter no mínimo 8 caracteres."
             ));
         }
 
@@ -58,9 +75,7 @@ public class AuthController {
         );
 
         User usuarioSalvo = userRepository.save(novoUsuario);
-
-        FarmHistory fichaInicial = new FarmHistory(novoId);
-        FarmHistory fichaSalva = farmHistoryRepository.save(fichaInicial);
+        FarmHistory fichaSalva = farmHistoryRepository.save(new FarmHistory(novoId));
         String token = tokenService.generateToken(usuarioSalvo.getIdUsuario());
 
         Map<String, Object> resposta = new LinkedHashMap<>();
@@ -73,7 +88,6 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
     }
 
-    // Autentica o usuário validando email e senha (BCrypt) e retorna seu UUID, token HMAC e ficha clínica
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> autenticarUsuario(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
@@ -82,6 +96,18 @@ public class AuthController {
         if (email == null || password == null) {
             return ResponseEntity.badRequest().body(Map.of(
                     "erro", "Informe email e senha."
+            ));
+        }
+
+        if (!emailValido(email)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "erro", "O email deve conter '@' e '.com'."
+            ));
+        }
+
+        if (password.length() < 8) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "erro", "A senha deve ter no mínimo 8 caracteres."
             ));
         }
 
@@ -99,7 +125,6 @@ public class AuthController {
             ));
         }
 
-        // Migra transparentemente hashes legados SHA-256 para BCrypt no primeiro login válido
         if (tokenService.needsRehash(usuario.getPassword())) {
             usuario.setPassword(tokenService.hashPassword(password));
             userRepository.save(usuario);

@@ -9,20 +9,14 @@ from sqlalchemy.orm import declarative_base
 from app.config import settings
 from app.utils.logger import logger
 
-# ---------------------------------------------------------
-# 1. Motor de Conexão Assíncrona (Engine)
-# ---------------------------------------------------------
-# O engine gerencia o pool de conexões com o PostgreSQL via asyncpg
+# Conexão assíncrona com o PostgreSQL
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=False,  # Altere para True caso queira ver os comandos SQL no terminal
+    echo=False,
     future=True,
 )
 
-# ---------------------------------------------------------
-# 2. Fábrica de Sessões (Sessionmaker)
-# ---------------------------------------------------------
-# Cada sessão representa uma transação de leitura/escrita no banco
+# Fábrica de sessões do banco
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
@@ -30,55 +24,30 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
-# ---------------------------------------------------------
-# 3. Base Declarativa
-# ---------------------------------------------------------
-# Todos os modelos (tabelas) herdam desta classe Base
 Base = declarative_base()
 
 
-# ---------------------------------------------------------
-# 4. Inicializador do Banco e Extensão PGVector
-# ---------------------------------------------------------
+# Habilita a extensão vector, sincroniza as tabelas e cria o índice HNSW
 async def init_db() -> None:
-    """
-    Inicializa o banco de dados:
-    1. Habilita a extensão 'vector' do PGVector no PostgreSQL.
-    2. Cria todas as tabelas mapeadas (como 'bula_chunks') se não existirem.
-    """
     try:
         async with engine.begin() as connection:
-            # Importa os modelos para registrá-los no Base.metadata (user_register, farm_history, historico_consultas, bula_chunks)
             import app.db.models  # noqa: F401
 
-            # Garante que a extensão de vetores do PostgreSQL esteja ativada
             await connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
-            logger.info("[DB] Extensao PGVector habilitada com sucesso.")
-
-            # Cria as tabelas definidas nos modelos que herdam de Base
             await connection.run_sync(Base.metadata.create_all)
-            logger.info("[DB] Tabelas (user_register, farm_history, historico_consultas, bula_chunks) sincronizadas com sucesso.")
-
-            # Cria o índice HNSW para busca semântica em milissegundos
             await connection.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_bula_chunks_embedding 
                 ON bula_chunks 
                 USING hnsw (embedding vector_cosine_ops);
             """))
-            logger.info("[DB] Indice HNSW na tabela bula_chunks criado/verificado com sucesso.")
+            logger.info("[DB] Banco de dados e indice HNSW verificados.")
     except Exception as e:
-        logger.error(f"[DB] Erro ao inicializar o banco de dados: {str(e)}")
+        logger.error(f"[DB] Erro ao inicializar banco de dados: {str(e)}")
         raise
 
 
-# ---------------------------------------------------------
-# 5. Dependência do FastAPI (get_db)
-# ---------------------------------------------------------
+# Fornece uma sessão assíncrona para as rotas do FastAPI
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """
-    Injeta uma sessão assíncrona nas rotas do FastAPI e fecha
-    automaticamente a conexão após a resposta ser enviada.
-    """
     async with AsyncSessionLocal() as session:
         try:
             yield session

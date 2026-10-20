@@ -6,10 +6,9 @@ interface ThemeToggleProps {
 }
 
 export default function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
-  const next = theme === 'light' ? 'escuro' : 'claro';
   return (
-    <button type="button" className="btn" onClick={onToggle} title={`Mudar para modo ${next}`}>
-      {theme === 'light' ? 'Escuro' : 'Claro'}
+    <button type="button" className="btn" onClick={onToggle}>
+      {theme === 'light' ? 'Modo escuro' : 'Modo claro'}
     </button>
   );
 }

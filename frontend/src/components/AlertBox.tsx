@@ -1,16 +1,9 @@
 import type { ReactNode } from 'react';
 import type { AlertType, OfficialLink } from '../types/medinteract';
 
-const ICONS: Record<AlertType, string> = {
-  danger: '⛔',
-  warning: '⚠️',
-  restriction: '🔒',
-  info: 'ℹ️',
-};
-
-const DEFAULT_TITLES: Record<AlertType, string> = {
+const TITULOS_PADRAO: Record<AlertType, string> = {
   danger: 'Atenção: risco grave',
-  warning: 'Use com cautela',
+  warning: 'Uso com cautela',
   restriction: 'Serviço indisponível',
   info: 'Informação',
 };
@@ -23,17 +16,14 @@ interface AlertBoxProps {
   onClose?: () => void;
 }
 
-// Único componente de alerta do sistema (erros, avisos clínicos e fallback)
+// Componente reutilizável de alerta para erros, avisos e contingência
 export default function AlertBox({ type, message, title, links, onClose }: AlertBoxProps) {
   const safeLinks = (links ?? []).filter((link) => /^https?:\/\//i.test(link.url));
 
   return (
     <div className={`alert alert-${type}`} role={type === 'info' ? 'status' : 'alert'}>
-      <span className="alert-icon" aria-hidden="true">
-        {ICONS[type]}
-      </span>
       <div className="alert-body">
-        <div className="alert-title">{title ?? DEFAULT_TITLES[type]}</div>
+        <div className="alert-title">{title ?? TITULOS_PADRAO[type]}</div>
         <div className="alert-message">{message}</div>
         {safeLinks.length > 0 && (
           <div className="alert-links">
