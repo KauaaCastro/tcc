@@ -654,3 +654,7 @@ textarea.input {
     display: none;
   }
 }
+
+/* Checkbox de consentimento dos termos */
+.checkbox-row { display: flex; gap: 0.6rem; align-items: flex-start; cursor: pointer; }
+.checkbox-row input { margin-top: 0.25rem; }

@@ -4,6 +4,7 @@ import AuthScreen from './components/AuthScreen';
 import ChatAssistant from './components/ChatAssistant';
 import HistorySidebar from './components/HistorySidebar';
 import PersonalInfoModal from './components/PersonalInfoModal';
+import TermsModal from './components/TermsModal';
 import ThemeToggle from './components/ThemeToggle';
 import { useTheme } from './hooks/useTheme';
 import { ApiError, clearSession, fetchProfile, loadSession, saveSession } from './services/api';
@@ -18,6 +19,7 @@ import type {
 } from './types/medinteract';
 
 const SESSION_ERRORS = [401, 403, 404];
+const TERMS_KEY = 'medinteract_terms_accepted';
 
 export default function App() {
   const { theme, toggleTheme } = useTheme();
@@ -33,6 +35,22 @@ export default function App() {
   const [selected, setSelected] = useState<HistoryItem | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const [showPersonalInfo, setShowPersonalInfo] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(() => localStorage.getItem(TERMS_KEY) === 'true');
+  const [termsDeclined, setTermsDeclined] = useState(false);
+
+  const acceptTerms = () => {
+    localStorage.setItem(TERMS_KEY, 'true');
+    setTermsAccepted(true);
+  };
+
+  // Recusa encerra a sessão e tenta fechar a aba
+  const declineTerms = () => {
+    clearSession();
+    localStorage.removeItem(TERMS_KEY);
+    setSession(null);
+    setTermsDeclined(true);
+    window.close();
+  };
 
   const logout = useCallback((message?: string) => {
     clearSession();
@@ -92,6 +110,26 @@ export default function App() {
     setSelected(null);
     setResetKey((key) => key + 1);
   };
+
+  if (termsDeclined) {
+    return (
+      <main className="auth-page">
+        <section className="auth-card">
+          <h1>MedInteract</h1>
+          <p className="auth-subtitle">
+            Sem a permissão de uso dos dados não é possível utilizar o sistema. Você já pode fechar esta página.
+          </p>
+          <button type="button" className="btn btn-primary btn-block" onClick={() => setTermsDeclined(false)}>
+            Rever os termos
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  if (!termsAccepted) {
+    return <TermsModal onAccept={acceptTerms} onDecline={declineTerms} />;
+  }
 
   if (!session) {
     return <AuthScreen notice={authNotice} onAuthenticated={handleAuthenticated} />;
