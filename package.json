@@ -5,13 +5,15 @@
   "description": "Scripts de verificação de build e execução do ecossistema MedInteract (Java + Python + React)",
   "scripts": {
     "check": "npm run check:python && npm run check:java && npm run check:frontend",
-    "check:python": "powershell -NoProfile -Command \"& 'backend/ai-engine/.venv/Scripts/python.exe' -m py_compile backend/ai-engine/main.py backend/ai-engine/cli_chat.py backend/ai-engine/app/db/models.py backend/ai-engine/app/db/session.py backend/ai-engine/app/services/rag_service.py backend/ai-engine/app/services/prompt_service.py backend/ai-engine/app/api/endpoints/chat.py; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & 'backend/ai-engine/.venv/Scripts/python.exe' backend/ai-engine/tests/test_backend_core.py\"",
+    "check:python": "python -m py_compile backend/ai-engine/main.py backend/ai-engine/app/db/models.py backend/ai-engine/app/db/session.py backend/ai-engine/app/services/rag_service.py backend/ai-engine/app/services/prompt_service.py backend/ai-engine/app/api/endpoints/chat.py",
     "check:java": "powershell -NoProfile -Command \"& \\\"$env:USERPROFILE\\.m2\\wrapper\\dists\\apache-maven-3.8.5-bin\\5i5jha092a3i37g0paqnfr15e0\\apache-maven-3.8.5\\bin\\mvn.cmd\\\" -f backend/core-api/pom.xml test-compile\"",
     "check:frontend": "npm --prefix frontend run check",
-    "chat": "powershell -NoProfile -Command \"& 'backend/ai-engine/.venv/Scripts/python.exe' backend/ai-engine/cli_chat.py\"",
-    "dev:ai": "powershell -NoProfile -Command \"& 'backend/ai-engine/.venv/Scripts/python.exe' backend/ai-engine/main.py\"",
+    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"docker compose up -d postgres-db 2>$null; $py = Start-Process python -ArgumentList 'backend/ai-engine/main.py' -NoNewWindow -PassThru; $java = Start-Process \\\"$env:USERPROFILE\\.m2\\wrapper\\dists\\apache-maven-3.8.5-bin\\5i5jha092a3i37g0paqnfr15e0\\apache-maven-3.8.5\\bin\\mvn.cmd\\\" -ArgumentList '-f','backend/core-api/pom.xml','spring-boot:run' -NoNewWindow -PassThru; try { npm --prefix frontend run dev } finally { Stop-Process -Id $py.Id,$java.Id -Force -ErrorAction SilentlyContinue }\"",
+    "dev:python": "python backend/ai-engine/main.py",
     "dev:java": "powershell -NoProfile -Command \"& \\\"$env:USERPROFILE\\.m2\\wrapper\\dists\\apache-maven-3.8.5-bin\\5i5jha092a3i37g0paqnfr15e0\\apache-maven-3.8.5\\bin\\mvn.cmd\\\" -f backend/core-api/pom.xml spring-boot:run\"",
     "dev:frontend": "npm --prefix frontend run dev",
+    "chat": "python backend/ai-engine/cli_chat.py",
+    "test:python": "python backend/ai-engine/tests/test_backend_core.py",
     "build:java": "powershell -NoProfile -Command \"& \\\"$env:USERPROFILE\\.m2\\wrapper\\dists\\apache-maven-3.8.5-bin\\5i5jha092a3i37g0paqnfr15e0\\apache-maven-3.8.5\\bin\\mvn.cmd\\\" -f backend/core-api/pom.xml package -DskipTests\""
   }
 }
