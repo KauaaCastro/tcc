@@ -3,6 +3,7 @@ import AlertBox from './components/AlertBox';
 import AuthScreen from './components/AuthScreen';
 import ChatAssistant from './components/ChatAssistant';
 import HistorySidebar from './components/HistorySidebar';
+import CalculatorsModal from './components/CalculatorsModal';
 import PersonalInfoModal from './components/PersonalInfoModal';
 import TermsModal from './components/TermsModal';
 import ThemeToggle from './components/ThemeToggle';
@@ -35,6 +36,7 @@ export default function App() {
   const [selected, setSelected] = useState<HistoryItem | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const [showPersonalInfo, setShowPersonalInfo] = useState(false);
+  const [showCalculators, setShowCalculators] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(() => localStorage.getItem(TERMS_KEY) === 'true');
   const [termsDeclined, setTermsDeclined] = useState(false);
 
@@ -152,6 +154,9 @@ export default function App() {
             </button>
           </div>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <button type="button" className="btn" onClick={() => setShowCalculators(true)}>
+            Calculadoras
+          </button>
           <button type="button" className="btn btn-primary" onClick={() => setShowPersonalInfo(true)}>
             Informações pessoais
           </button>
@@ -184,6 +189,8 @@ export default function App() {
           />
         </div>
       </div>
+
+      {showCalculators && <CalculatorsModal onClose={() => setShowCalculators(false)} />}
 
       {showPersonalInfo && (
         <PersonalInfoModal

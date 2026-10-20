@@ -2,8 +2,10 @@ import type {
   AlertType,
   AuthResponse,
   ChatRequest,
+  PediatricDoseResponse,
   PersonalFormValues,
   ProfileResponse,
+  RenalClearanceResponse,
   Session,
   StreamChunk,
 } from '../types/medinteract';
@@ -194,4 +196,26 @@ export async function streamChat(
 
   buffer += decoder.decode();
   if (buffer.trim()) handleEvent(buffer);
+}
+
+
+// Calcula a dose pediatrica recomendada por peso
+export function calculatePediatricDose(weight: number, dosePerKg: number): Promise<PediatricDoseResponse> {
+  return request<PediatricDoseResponse>('/api/calculators/pediatric', {
+    method: 'POST',
+    body: { weight, dosePerKg },
+  });
+}
+
+// Calcula o Clearance de Creatinina (Cockcroft-Gault) para funcao renal
+export function calculateRenalClearance(
+  age: number,
+  weight: number,
+  creatinine: number,
+  sex: 'M' | 'F',
+): Promise<RenalClearanceResponse> {
+  return request<RenalClearanceResponse>('/api/calculators/renal-clearance', {
+    method: 'POST',
+    body: { age, weight, creatinine, sex },
+  });
 }

@@ -169,9 +169,11 @@ python -m app.db.seed
 python backend/ai-engine/app/db/seed.py --limit 20 --max-chunks 850 --batch-size 20
 
 # Processar todas as bulas do diretório Script/bulario/ (respeitando o teto de chunks por rodada):
-python backend/ai-engine/app/db/seed.py --limit 0 --max-chunks 850
+python -m app.db.seed --limit 20 --max-chunks 850
 ```
 
+<!-- Conferir a quantidade de medicamentos via database -->
+select distinct med_name from bula_chunks bc;
 ---
 
 ### 🐳 5.4. Comandos Docker Compose e `Makefile`
