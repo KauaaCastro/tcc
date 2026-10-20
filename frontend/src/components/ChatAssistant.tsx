@@ -9,7 +9,6 @@ import { newId } from '../utils/format';
 const MIN_QUESTION = 3;
 const MAX_QUESTION = 1500;
 
-// Mensagem curta exibida abaixo da resposta, conforme o tipo de alerta
 const RESPONSE_ALERTS: Partial<Record<AlertType, { title?: string; message: string }>> = {
   danger: {
     title: 'Interação grave ou contraindicada',
@@ -24,6 +23,29 @@ const RESPONSE_ALERTS: Partial<Record<AlertType, { title?: string; message: stri
   },
 };
 
+// Identifica medicamentos citados nos chips, no texto da pergunta e nas fontes da bula
+function identificarMedicamentos(pergunta: string, chips: string[], sources?: string[]): string[] {
+  const lista: string[] = [...chips];
+
+  const padraoFarmaco = /\b[a-zà-ÿ]{3,}(?:ina|zol|mol|pril|sartana|statina|cilina|floxacino|pam|lol|dipino|profeno|ofenaco|micina|ona|ato|ol)\b/gi;
+  const encontradosNoTexto = pergunta.match(padraoFarmaco) ?? [];
+
+  for (const item of encontradosNoTexto) {
+    if (!lista.some((m) => m.toLowerCase() === item.toLowerCase())) {
+      lista.push(item);
+    }
+  }
+
+  for (const src of sources ?? []) {
+    const nomeBula = src.split(' - Chunk')[0]?.trim();
+    if (nomeBula && !lista.some((m) => nomeBula.toLowerCase().includes(m.toLowerCase()) || m.toLowerCase().includes(nomeBula.toLowerCase()))) {
+      lista.push(nomeBula);
+    }
+  }
+
+  return lista;
+}
+
 interface ChatAssistantProps {
   session: Session;
   profile: ProfileType;
@@ -32,7 +54,6 @@ interface ChatAssistantProps {
   onConversationSaved: () => void;
 }
 
-// Área central: chatbot simples com resposta em tempo real (SSE)
 export default function ChatAssistant({ session, profile, selected, resetKey, onConversationSaved }: ChatAssistantProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [question, setQuestion] = useState('');
@@ -42,7 +63,6 @@ export default function ChatAssistant({ session, profile, selected, resetKey, on
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Troca de conversa ou nova conversa: cancela o stream e recarrega a tela
   useEffect(() => {
     abortRef.current?.abort();
     setIsLoading(false);
@@ -51,7 +71,12 @@ export default function ChatAssistant({ session, profile, selected, resetKey, on
     setMessages(
       selected
         ? [
-            { id: newId(), role: 'user', content: selected.perguntaUsuario },
+            {
+              id: newId(),
+              role: 'user',
+              content: selected.perguntaUsuario,
+              medications: identificarMedicamentos(selected.perguntaUsuario, []),
+            },
             { id: newId(), role: 'assistant', content: selected.respostaIa },
           ]
         : [],
@@ -77,13 +102,16 @@ export default function ChatAssistant({ session, profile, selected, resetKey, on
 
     const controller = new AbortController();
     abortRef.current = controller;
+    const userId = newId();
     const assistantId = newId();
+    const medsIniciais = identificarMedicamentos(text, medications);
+
     const updateAssistant = (update: (message: ChatMessage) => ChatMessage) =>
       setMessages((prev) => prev.map((m) => (m.id === assistantId ? update(m) : m)));
 
     setMessages((prev) => [
       ...prev,
-      { id: newId(), role: 'user', content: text },
+      { id: userId, role: 'user', content: text, medications: medsIniciais },
       { id: assistantId, role: 'assistant', content: '', streaming: true },
     ]);
     setQuestion('');
@@ -93,14 +121,21 @@ export default function ChatAssistant({ session, profile, selected, resetKey, on
     try {
       await streamChat(
         { idUsuario: session.idUsuario, question: text, profile, medications },
-        (chunk) =>
+        (chunk) => {
           updateAssistant((m) => ({
             ...m,
             content: m.content + chunk.chunk,
             ...(chunk.is_final
               ? { alertType: chunk.alert_type, sources: chunk.sources, links: chunk.links, streaming: false }
               : {}),
-          })),
+          }));
+          if (chunk.is_final && chunk.sources.length > 0) {
+            const medsCompletos = identificarMedicamentos(text, medications, chunk.sources);
+            setMessages((prev) =>
+              prev.map((m) => (m.id === userId ? { ...m, medications: medsCompletos } : m)),
+            );
+          }
+        },
         controller.signal,
       );
       updateAssistant((m) => ({ ...m, streaming: false }));
@@ -121,7 +156,6 @@ export default function ChatAssistant({ session, profile, selected, resetKey, on
     }
   };
 
-  // Enter envia; Shift+Enter quebra a linha
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
@@ -134,8 +168,8 @@ export default function ChatAssistant({ session, profile, selected, resetKey, on
       <div className="chat-messages" aria-live="polite">
         {messages.length === 0 ? (
           <div className="chat-welcome">
-            <h2>Como posso ajudar?</h2>
-            <p>Pergunte sobre medicamentos, doses e interações. As respostas seguem as bulas oficiais da ANVISA.</p>
+            <h2>Consulta de medicamentos</h2>
+            <p>Digite uma dúvida abaixo ou selecione uma conversa recente na barra à esquerda.</p>
           </div>
         ) : (
           messages.map((message) => {
@@ -146,14 +180,16 @@ export default function ChatAssistant({ session, profile, selected, resetKey, on
                   {message.role === 'user' ? (
                     message.content
                   ) : message.content ? (
-                    <>
-                      <MarkdownText text={message.content} />
-                      {message.streaming && <span className="cursor" aria-hidden="true" />}
-                    </>
+                    <MarkdownText text={message.content} />
                   ) : (
-                    <span>Analisando as bulas...</span>
+                    <span>Consultando bulas...</span>
                   )}
                 </div>
+                {message.role === 'user' && message.medications && message.medications.length > 0 && (
+                  <div className="msg-sources">
+                    Medicamentos citados: <strong>{message.medications.join(', ')}</strong>
+                  </div>
+                )}
                 {alert && message.alertType && (
                   <AlertBox type={message.alertType} title={alert.title} message={alert.message} links={message.links} />
                 )}
@@ -183,10 +219,10 @@ export default function ChatAssistant({ session, profile, selected, resetKey, on
             aria-label="Pergunta"
           />
           <button type="button" className="btn btn-primary" onClick={() => void handleSend()} disabled={isLoading || !question.trim()}>
-            {isLoading ? 'Respondendo...' : 'Enviar'}
+            {isLoading ? 'Aguarde...' : 'Enviar'}
           </button>
         </div>
-        <p className="disclaimer">O MedInteract é um apoio informativo e não substitui a avaliação de um profissional de saúde.</p>
+        <p className="disclaimer">As informações apresentadas têm caráter educativo e não substituem avaliação médica.</p>
       </div>
     </section>
   );

@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react';
 import type { PersonalFormValues } from '../types/medinteract';
 
 interface PersonalFormFieldsProps {
@@ -6,7 +7,17 @@ interface PersonalFormFieldsProps {
   disabled?: boolean;
 }
 
-// Campos de informações pessoais compartilhados entre cadastro e modal de edição
+// Bloqueia digitação de sinal negativo nos campos numéricos
+function bloquearSinalNegativo(e: KeyboardEvent<HTMLInputElement>) {
+  if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+    e.preventDefault();
+  }
+}
+
+function semNegativo(valor: string): string {
+  return valor.replace(/-/g, '');
+}
+
 export default function PersonalFormFields({ values, onChange, disabled }: PersonalFormFieldsProps) {
   return (
     <>
@@ -15,48 +26,64 @@ export default function PersonalFormFields({ values, onChange, disabled }: Perso
           <label htmlFor="pf-idade">Idade</label>
           <input
             id="pf-idade"
+            type="number"
+            min={0}
+            max={130}
+            step={1}
             className="input"
-            inputMode="numeric"
             placeholder="Ex.: 35"
             value={values.idade}
             disabled={disabled}
-            onChange={(e) => onChange({ idade: e.target.value })}
+            onKeyDown={bloquearSinalNegativo}
+            onChange={(e) => onChange({ idade: semNegativo(e.target.value) })}
           />
         </div>
         <div className="field">
           <label htmlFor="pf-peso">Peso (kg)</label>
           <input
             id="pf-peso"
+            type="number"
+            min={0}
+            max={500}
+            step="0.1"
             className="input"
-            inputMode="decimal"
-            placeholder="Ex.: 72,5"
+            placeholder="Ex.: 72.5"
             value={values.peso}
             disabled={disabled}
-            onChange={(e) => onChange({ peso: e.target.value })}
+            onKeyDown={bloquearSinalNegativo}
+            onChange={(e) => onChange({ peso: semNegativo(e.target.value) })}
           />
         </div>
         <div className="field">
           <label htmlFor="pf-altura">Altura (m)</label>
           <input
             id="pf-altura"
+            type="number"
+            min={0}
+            max={2.5}
+            step="0.01"
             className="input"
-            inputMode="decimal"
-            placeholder="Ex.: 1,75"
+            placeholder="Ex.: 1.75"
             value={values.altura}
             disabled={disabled}
-            onChange={(e) => onChange({ altura: e.target.value })}
+            onKeyDown={bloquearSinalNegativo}
+            onChange={(e) => onChange({ altura: semNegativo(e.target.value) })}
           />
         </div>
         <div className="field">
           <label htmlFor="pf-sono">Horas de sono</label>
           <input
             id="pf-sono"
+            type="number"
+            min={0}
+            max={24}
+            step="0.5"
             className="input"
-            inputMode="decimal"
-            placeholder="Ex.: 7,5"
+            placeholder="Ex.: 7.5"
             value={values.horasSono}
             disabled={disabled}
-            onChange={(e) => onChange({ horasSono: e.target.value })}
+            onKeyDown={bloquearSinalNegativo}
+            onChange={(e) => onChange({ horasSono: semNegativo(e.target.value) })}
           />
         </div>
       </div>

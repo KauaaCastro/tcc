@@ -43,7 +43,7 @@ def sort_pdfs_by_priority(pdf_files: List[Path]) -> List[Path]:
     )
 
 
-# Varre as bulas em PDF, extrai chunks, gera embeddings em lote e grava de forma atômica por bula
+# Varre as bulas em PDF, pula as já salvas e grava um novo lote respeitando limit e max_chunks
 async def seed_bulario(
     limit: Optional[int] = 9,
     max_chunks: int = 850,
@@ -60,13 +60,10 @@ async def seed_bulario(
         return
 
     pdf_files = sort_pdfs_by_priority(list(bulario_dir.glob("*.pdf")))
-    if limit:
-        pdf_files = pdf_files[:limit]
-
     total_files = len(pdf_files)
     logger.info(
-        f"[SEED] Iniciando processamento de ate {total_files} medicamentos "
-        f"(teto de seguranca: {max_chunks} chunks nesta execucao)..."
+        f"[SEED] Acervo com {total_files} PDFs | Meta desta rodada: ate {limit or total_files} novas bulas "
+        f"(teto de seguranca: {max_chunks} novos chunks)..."
     )
 
     processed_count = 0
@@ -77,6 +74,10 @@ async def seed_bulario(
 
     async with AsyncSessionLocal() as session:
         for index, pdf_file in enumerate(pdf_files, start=1):
+            if limit and processed_count >= limit:
+                logger.info(f"[SEED] Meta de {limit} novas bulas atingida nesta rodada.")
+                break
+
             percent = (index / total_files) * 100
             med_name = PDFProcessor.clean_medication_name(pdf_file)
 
@@ -89,15 +90,10 @@ async def seed_bulario(
                     empty_count += 1
                     continue
 
-                # Verifica a quantidade de chunks já gravados no banco para esta bula
                 count_stmt = select(func.count()).select_from(BulaChunk).where(BulaChunk.med_name == med_name)
                 existing_count = (await session.execute(count_stmt)).scalar_one()
 
                 if existing_count == expected_chunks:
-                    logger.info(
-                        f"[{index}/{total_files} | {percent:.1f}%] [PULANDO] "
-                        f"'{med_name}' ja completo ({existing_count} chunks)."
-                    )
                     skipped_count += 1
                     continue
 
@@ -151,7 +147,6 @@ async def seed_bulario(
                             )
                         )
 
-                    # Pausa controlada entre lotes para respeitar a janela de 100 itens/min da camada gratuita
                     if start_idx + batch_size < expected_chunks:
                         await asyncio.sleep(4.5)
 
@@ -182,7 +177,7 @@ async def seed_bulario(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Seed prioritario do bulario ANVISA no PGVector.")
-    parser.add_argument("--limit", type=int, default=9, help="Maximo de PDFs a inspecionar (0 para todos).")
+    parser.add_argument("--limit", type=int, default=9, help="Maximo de novas bulas a gravar na rodada (0 para todas).")
     parser.add_argument("--max-chunks", type=int, default=850, help="Teto de chunks a vetorizar na execucao.")
     parser.add_argument("--batch-size", type=int, default=20, help="Quantidade de textos por chamada em lote.")
     args = parser.parse_args()

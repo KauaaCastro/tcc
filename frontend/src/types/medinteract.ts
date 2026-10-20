@@ -1,4 +1,5 @@
-// Types -> Alerts, Profiles, Sessions, themes.
+// Tipos utilizados na comunicação entre o frontend e as APIs Java e Python
+
 export type AlertType = 'danger' | 'warning' | 'restriction' | 'info';
 
 export type ProfileType = 'PATIENT' | 'PROFESSIONAL';
@@ -10,7 +11,6 @@ export interface OfficialLink {
   url: string;
 }
 
-// Sessão guarda apenas o UUID opaco e o token
 export interface Session {
   idUsuario: string;
   token: string;
@@ -22,7 +22,6 @@ export interface UserAccount {
   email: string;
 }
 
-// Farm_History (Ficha clínica do user)
 export interface PersonalProfile {
   idade: number | null;
   peso: number | null;
@@ -51,7 +50,6 @@ export interface AuthResponse {
   imcCalculado?: number | null;
 }
 
-// Resposta de GET/POST /api/perfil 
 export interface ProfileResponse {
   usuario: UserAccount | null;
   perfil: PersonalProfile | null;
@@ -59,7 +57,6 @@ export interface ProfileResponse {
   historico?: HistoryItem[];
 }
 
-// Valores dos campos do formulário
 export interface PersonalFormValues {
   apelido: string;
   idade: string;
@@ -80,7 +77,6 @@ export interface ChatRequest {
   medications: string[];
 }
 
-// Fragmento recebido via SSE em POST /api/chat/stream
 export interface StreamChunk {
   chunk: string;
   alert_type: AlertType | null;
@@ -93,13 +89,13 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  medications?: string[];
   alertType?: AlertType | null;
   links?: OfficialLink[];
   sources?: string[];
   streaming?: boolean;
 }
 
-// Aviso exibido em telas de login, perfil e chat
 export interface Notice {
   message: string;
   alertType: AlertType;

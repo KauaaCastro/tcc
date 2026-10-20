@@ -1,50 +1,53 @@
 import { useState, type FormEvent } from 'react';
 import AlertBox from './AlertBox';
 import PersonalFormFields from './PersonalFormFields';
-import ThemeToggle from './ThemeToggle';
 import { ApiError, login, register, saveProfile } from '../services/api';
-import type { Notice, PersonalFormValues, Session, Theme } from '../types/medinteract';
+import type { Notice, PersonalFormValues, Session } from '../types/medinteract';
 import { emptyPersonalForm, validatePersonalForm } from '../utils/profileForm';
 
 interface AuthScreenProps {
-  theme: Theme;
-  onToggleTheme: () => void;
   notice: Notice | null;
   onAuthenticated: (session: Session, notice?: Notice) => void;
 }
 
-type Mode = 'login' | 'register';
+// Verifica se o email possui '@' e '.com' após o '@'
+function emailValido(email: string): boolean {
+  const texto = email.trim().toLowerCase();
+  const posArroba = texto.indexOf('@');
+  const posCom = texto.indexOf('.com');
+  return posArroba > 0 && posCom > posArroba + 1;
+}
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// tela (deslogada): login e cadastro com informações pessoais
-export default function AuthScreen({ theme, onToggleTheme, notice, onAuthenticated }: AuthScreenProps) {
-  const [mode, setMode] = useState<Mode>('login');
+export default function AuthScreen({ notice, onAuthenticated }: AuthScreenProps) {
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [form, setForm] = useState<PersonalFormValues>(emptyPersonalForm);
   const [error, setError] = useState<Notice | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const patchForm = (patch: Partial<PersonalFormValues>) => setForm((prev) => ({ ...prev, ...patch }));
-
-  const switchMode = (next: Mode) => {
-    setMode(next);
-    setError(null);
+  const updateForm = (campo: Partial<PersonalFormValues>) => {
+    setForm((atual) => ({ ...atual, ...campo }));
   };
 
-  const validate = (): string | null => {
-    if (!EMAIL_PATTERN.test(email.trim())) return 'Informe um e-mail válido.';
-    if (mode === 'login') return password ? null : 'Informe sua senha.';
-    if (password.length < 6) return 'A senha deve ter pelo menos 6 caracteres.';
-    return validatePersonalForm(form);
+  const validarCampos = (): string | null => {
+    if (!emailValido(email)) {
+      return "Informe um e-mail válido contendo '@' e '.com'.";
+    }
+    if (password.length < 8) {
+      return 'A senha deve ter no mínimo 8 caracteres.';
+    }
+    if (mode === 'register') {
+      return validatePersonalForm(form);
+    }
+    return null;
   };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const problem = validate();
-    if (problem) {
-      setError({ message: problem, alertType: 'warning' });
+    const erroValidacao = validarCampos();
+    if (erroValidacao) {
+      setError({ message: erroValidacao, alertType: 'warning' });
       return;
     }
 
@@ -52,27 +55,27 @@ export default function AuthScreen({ theme, onToggleTheme, notice, onAuthenticat
     setError(null);
     try {
       if (mode === 'login') {
-        const result = await login(email.trim(), password);
-        onAuthenticated({ idUsuario: result.idUsuario, token: result.token });
+        const res = await login(email.trim(), password);
+        onAuthenticated({ idUsuario: res.idUsuario, token: res.token });
         return;
       }
 
-      const result = await register({ apelido: form.apelido.trim(), email: email.trim(), password });
-      const session: Session = { idUsuario: result.idUsuario, token: result.token };
+      const res = await register({ apelido: form.apelido.trim(), email: email.trim(), password });
+      const novaSessao: Session = { idUsuario: res.idUsuario, token: res.token };
       try {
-        await saveProfile(session, form);
-        onAuthenticated(session);
+        await saveProfile(novaSessao, form);
+        onAuthenticated(novaSessao);
       } catch {
-        onAuthenticated(session, {
-          message: 'Conta criada, mas não foi possível salvar suas informações pessoais. Preencha-as em "Informações pessoais".',
+        onAuthenticated(novaSessao, {
+          message: 'Conta criada. Complete seus dados no botão "Informações pessoais".',
           alertType: 'warning',
         });
       }
     } catch (err) {
-      const apiError = err instanceof ApiError ? err : null;
+      const apiErr = err instanceof ApiError ? err : null;
       setError({
-        message: apiError?.message ?? 'Erro inesperado. Tente novamente.',
-        alertType: apiError?.alertType ?? 'danger',
+        message: apiErr?.message ?? 'Erro ao autenticar usuário.',
+        alertType: apiErr?.alertType ?? 'danger',
       });
     } finally {
       setLoading(false);
@@ -84,26 +87,27 @@ export default function AuthScreen({ theme, onToggleTheme, notice, onAuthenticat
       <section className="auth-card">
         <div className="auth-brand">
           <h1>MedInteract</h1>
-          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         </div>
-        <p className="auth-subtitle">Consultas sobre medicamentos e interações, baseadas em bulas oficiais.</p>
+        <p className="auth-subtitle">Consulta de bulas e interações medicamentosas.</p>
 
-        <div className="auth-tabs" role="tablist">
+        <div className="auth-tabs">
           <button
             type="button"
-            role="tab"
-            aria-selected={mode === 'login'}
             className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
-            onClick={() => switchMode('login')}
+            onClick={() => {
+              setMode('login');
+              setError(null);
+            }}
           >
             Entrar
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={mode === 'register'}
             className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
-            onClick={() => switchMode('register')}
+            onClick={() => {
+              setMode('register');
+              setError(null);
+            }}
           >
             Criar conta
           </button>
@@ -117,15 +121,14 @@ export default function AuthScreen({ theme, onToggleTheme, notice, onAuthenticat
           <div className="form-section">
             {mode === 'register' && (
               <div className="field">
-                <label htmlFor="auth-apelido">Apelido</label>
+                <label htmlFor="auth-apelido">Nome ou apelido</label>
                 <input
                   id="auth-apelido"
                   className="input"
-                  autoComplete="nickname"
                   maxLength={50}
                   value={form.apelido}
                   disabled={loading}
-                  onChange={(e) => patchForm({ apelido: e.target.value })}
+                  onChange={(e) => updateForm({ apelido: e.target.value })}
                 />
               </div>
             )}
@@ -135,7 +138,7 @@ export default function AuthScreen({ theme, onToggleTheme, notice, onAuthenticat
                 id="auth-email"
                 type="email"
                 className="input"
-                autoComplete="email"
+                placeholder="usuario@exemplo.com"
                 value={email}
                 disabled={loading}
                 onChange={(e) => setEmail(e.target.value)}
@@ -147,26 +150,25 @@ export default function AuthScreen({ theme, onToggleTheme, notice, onAuthenticat
                 id="auth-password"
                 type="password"
                 className="input"
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                minLength={8}
                 value={password}
                 disabled={loading}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              {mode === 'register' && <span className="field-hint">Mínimo de 6 caracteres.</span>}
+              <span className="field-hint">Obrigatório no mínimo 8 caracteres.</span>
             </div>
           </div>
 
           {mode === 'register' && (
             <div className="form-section">
               <h3>Informações pessoais</h3>
-              <span className="field-hint">Opcionais. Ajudam a IA a personalizar as respostas e ficam guardadas no servidor.</span>
-              <PersonalFormFields values={form} onChange={patchForm} disabled={loading} />
+              <PersonalFormFields values={form} onChange={updateForm} disabled={loading} />
             </div>
           )}
 
           <div className="auth-actions">
             <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-              {loading ? 'Aguarde...' : mode === 'login' ? 'Entrar' : 'Criar conta'}
+              {loading ? 'Carregando...' : mode === 'login' ? 'Entrar' : 'Cadastrar'}
             </button>
           </div>
         </form>

@@ -18,22 +18,19 @@ from app.utils.logger import logger
 
 router = APIRouter()
 
-# Links oficiais pré-aprovados para contingência do Fallback Seguro
 OFFICIAL_FALLBACK_LINKS = [
     {"name": "Bulário Eletrônico da ANVISA", "url": "https://consultas.anvisa.gov.br/#/bulario/"},
     {"name": "Medscape Drug Interaction Checker", "url": "https://reference.medscape.com/drug-interactionchecker"},
 ]
 
 FALLBACK_MESSAGE = (
-    "[AVISO DE SEGURANÇA CLÍNICA - FALLBACK ATIVADO]\n"
     "O serviço de Inteligência Artificial está temporariamente indisponível.\n"
-    "Para garantir sua segurança sem risco de alucinações, consulte diretamente as fontes oficiais:\n"
+    "Consulte diretamente as fontes oficiais:\n"
     "• Bulário Eletrônico da ANVISA: https://consultas.anvisa.gov.br/#/bulario/\n"
     "• Medscape Drug Interaction Checker: https://reference.medscape.com/drug-interactionchecker"
 )
 
 
-# Orquestra Guardrail, busca de perfil (UUID), RAG, Prompt Sanduíche e streaming SSE
 async def chat_stream_generator(request: QueryRequest):
     clean_question = prompt_service.sanitize_xml(request.question, "")
     is_valid, block_reason, alert = guardrail_service.validate_scope(clean_question, request.medications)
@@ -53,7 +50,7 @@ async def chat_stream_generator(request: QueryRequest):
     )
     perfil_data = await rag_service.get_perfil_usuario(request.id_usuario)
     retrieved_chunks = await rag_service.search_relevant_chunks(
-        clean_question, top_k=4, medications=request.medications
+        clean_question, top_k=6, medications=request.medications
     )
     sources_list = [
         f"{c.get('med_name', 'Bula')} - Chunk #{c.get('chunk_index', i)}"
@@ -68,12 +65,28 @@ async def chat_stream_generator(request: QueryRequest):
         medications=request.medications,
     )
 
-    full_response_parts = []
+    raw_parts = []
+    header_buffer = ""
+    header_cleaned = False
+
     try:
         async for text_chunk in llm_service.generate_response_stream(sandwich_prompt, clean_question):
-            full_response_parts.append(text_chunk)
+            raw_parts.append(text_chunk)
+
+            # Remove a tag interna ([DANGER]/[WARNING]/[INFO]) do início antes de exibir ao usuário
+            if not header_cleaned:
+                header_buffer += text_chunk
+                if len(header_buffer) < 24 and "\n" not in header_buffer:
+                    continue
+                header_cleaned = True
+                clean_chunk = prompt_service.clean_response_tags(header_buffer)
+                if not clean_chunk:
+                    continue
+            else:
+                clean_chunk = text_chunk
+
             payload = {
-                "chunk": text_chunk,
+                "chunk": clean_chunk,
                 "alert_type": None,
                 "sources": [],
                 "links": [],
@@ -81,15 +94,20 @@ async def chat_stream_generator(request: QueryRequest):
             }
             yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
-        full_answer = "".join(full_response_parts).strip()
-        detected_alert = prompt_service.detect_alert_type(full_answer)
+        if not header_cleaned and header_buffer:
+            clean_chunk = prompt_service.clean_response_tags(header_buffer)
+            if clean_chunk:
+                yield f"data: {json.dumps({'chunk': clean_chunk, 'alert_type': None, 'sources': [], 'links': [], 'is_final': False}, ensure_ascii=False)}\n\n"
 
-        # Persiste no histórico apenas respostas válidas concluídas sem erro de IA
-        if request.id_usuario and full_answer:
+        full_raw_answer = "".join(raw_parts).strip()
+        detected_alert = prompt_service.detect_alert_type(full_raw_answer)
+        clean_full_answer = prompt_service.clean_response_tags(full_raw_answer).strip()
+
+        if request.id_usuario and clean_full_answer:
             await rag_service.save_historico_consulta(
                 id_usuario=request.id_usuario,
                 pergunta_usuario=clean_question,
-                resposta_ia=full_answer,
+                resposta_ia=clean_full_answer,
             )
 
         final_payload = {
@@ -104,7 +122,7 @@ async def chat_stream_generator(request: QueryRequest):
     except (LLMUnavailableError, Exception) as e:
         logger.error(f"[CHAT] Fallback Seguro ativado durante streaming: {str(e)}")
         error_payload = {
-            "chunk": f"\n\n{FALLBACK_MESSAGE}" if full_response_parts else FALLBACK_MESSAGE,
+            "chunk": f"\n\n{FALLBACK_MESSAGE}" if raw_parts else FALLBACK_MESSAGE,
             "alert_type": AlertType.RESTRICTION.value,
             "sources": sources_list,
             "links": OFFICIAL_FALLBACK_LINKS,
@@ -113,7 +131,6 @@ async def chat_stream_generator(request: QueryRequest):
         yield f"data: {json.dumps(error_payload, ensure_ascii=False)}\n\n"
 
 
-# Rota de consulta clínica com transmissão em tempo real (SSE)
 @router.post("/chat/stream", summary="Consulta clínica com streaming SSE")
 async def chat_stream_endpoint(request: QueryRequest):
     return StreamingResponse(
@@ -127,7 +144,6 @@ async def chat_stream_endpoint(request: QueryRequest):
     )
 
 
-# Rota de consulta farmacêutica via RAG retornando JSON completo
 @router.post("/ai/query", response_model=QueryResponse, summary="Consulta Farmacêutica via RAG (JSON)")
 async def ai_query_endpoint(request: QueryRequest):
     clean_question = prompt_service.sanitize_xml(request.question, "")
@@ -144,7 +160,7 @@ async def ai_query_endpoint(request: QueryRequest):
 
     perfil_data = await rag_service.get_perfil_usuario(request.id_usuario)
     retrieved_chunks = await rag_service.search_relevant_chunks(
-        clean_question, top_k=4, medications=request.medications
+        clean_question, top_k=6, medications=request.medications
     )
     sources_list = [
         f"{c.get('med_name', 'Bula')} - Chunk #{c.get('chunk_index', i)}"
@@ -160,7 +176,7 @@ async def ai_query_endpoint(request: QueryRequest):
     )
 
     try:
-        answer = await llm_service.generate_response(sandwich_prompt, clean_question)
+        raw_answer = await llm_service.generate_response(sandwich_prompt, clean_question)
     except (LLMUnavailableError, Exception) as e:
         logger.error(f"[CHAT] Fallback Seguro ativado em /ai/query: {str(e)}")
         return QueryResponse(
@@ -171,16 +187,18 @@ async def ai_query_endpoint(request: QueryRequest):
             links=[OfficialLink(**link) for link in OFFICIAL_FALLBACK_LINKS],
         )
 
-    if request.id_usuario and answer:
+    detected_alert = prompt_service.detect_alert_type(raw_answer)
+    clean_answer = prompt_service.clean_response_tags(raw_answer).strip()
+
+    if request.id_usuario and clean_answer:
         await rag_service.save_historico_consulta(
             id_usuario=request.id_usuario,
             pergunta_usuario=clean_question,
-            resposta_ia=answer,
+            resposta_ia=clean_answer,
         )
 
-    detected_alert = prompt_service.detect_alert_type(answer)
     return QueryResponse(
-        response=answer,
+        response=clean_answer,
         sources=sources_list,
         severity=detected_alert,
         alert_type=detected_alert,
@@ -188,17 +206,15 @@ async def ai_query_endpoint(request: QueryRequest):
     )
 
 
-# Salva ou atualiza o Perfil Clínico Anônimo (Upsert por UUID)
 @router.post("/perfil", summary="Salvar ou Atualizar Perfil Clínico Anônimo")
 async def salvar_perfil_endpoint(payload: PerfilUsuarioPayload):
     perfil_salvo = await rag_service.upsert_perfil_usuario(payload)
     return {
-        "mensagem": "Perfil clínico anônimo salvo com sucesso.",
+        "mensagem": "Perfil clínico salvo com sucesso.",
         "perfil": perfil_salvo,
     }
 
 
-# Carrega o Perfil Clínico Anônimo e o histórico de consultas pelo UUID
 @router.get("/perfil/{id_usuario}", summary="Carregar Perfil Clínico Anônimo e Histórico")
 async def carregar_perfil_endpoint(id_usuario: UUID):
     perfil = await rag_service.get_perfil_usuario(id_usuario)

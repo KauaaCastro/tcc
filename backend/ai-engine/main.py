@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 import os
 import sys
 
-# Garante que o diretório base do ai-engine esteja no sys.path para resolver os imports de 'app'
+# Inclui o diretório do ai-engine no sys.path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
@@ -15,7 +15,6 @@ from app.utils.logger import logger
 from app.api.router import api_router
 
 
-# Gerencia o ciclo de vida da aplicação FastAPI sincronizando tabelas e índices na inicialização
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from app.db.session import init_db
@@ -23,7 +22,7 @@ async def lifespan(app: FastAPI):
         await init_db()
     except Exception as e:
         logger.warning(f"[STARTUP] Aviso ao inicializar tabelas no banco: {e}")
-    logger.info(f"🚀 {settings.PROJECT_NAME} v{settings.VERSION} iniciado com sucesso na porta {settings.PORT}.")
+    logger.info(f"{settings.PROJECT_NAME} v{settings.VERSION} iniciado na porta {settings.PORT}.")
     yield
 
 
@@ -36,7 +35,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configuração de CORS restrita às origens locais de desenvolvimento e container
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -51,7 +49,6 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
-# Registra os roteadores da API (/api)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
@@ -72,5 +69,3 @@ if __name__ == "__main__":
         reload=True,
         app_dir=BASE_DIR,
     )
-
-
