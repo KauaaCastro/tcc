@@ -10,40 +10,42 @@
 
 O **MedInteract** é uma plataforma web inteligente desenvolvida para realizar análises de interações medicamentosas, fornecendo suporte à decisão clínica para profissionais de saúde (farmacêuticos, médicos e enfermeiros) e orientações didáticas e seguras para pacientes e usuários comuns.
 
-A plataforma combina a potência dos modelos de linguagem de última geração (LLMs) com a técnica de **RAG (Retrieval-Augmented Generation)**, realizando buscas por similaridade semântica em bulas oficiais da ANVISA armazenadas em um banco de dados vetorial (**PGVector**).
+A plataforma combina modelos de linguagem de última geração (**Google Gemini**) com a técnica de **RAG (Retrieval-Augmented Generation)** e o **Prompt Sanduíche**, realizando buscas por similaridade semântica em bulas oficiais da ANVISA armazenadas em um banco de dados vetorial (**PostgreSQL + PGVector**) e cruzando com a ficha clínica do paciente (`farm_history`).
 
 ### 🎯 Principais Diferenciais
-* **Perfil Adaptativo**: Respostas em linguagem técnica médica para profissionais (`PROFESSIONAL`) ou linguagem simplificada e acessível para pacientes (`PATIENT`).
-* **Streaming em Tempo Real (SSE)**: Transmissão da análise palavra por palavra via Server-Sent Events, reduzindo o tempo de espera percebido.
-* **Fallback Seguro de Saúde**: Caso as IAs estejam indisponíveis, o sistema **não gera simulações médicas arbitrárias**; em vez disso, aciona um mecanismo de restrição que exibe links e fontes oficiais pré-aprovadas (ANVISA, PubChem, Medscape, etc.).
-* **Guardrails de Escopo**: Bloqueio automático de perguntas fora do contexto médico/farmacológico (prevenção de fuga de assunto).
+* **Perfil Adaptativo (`PROFESSIONAL` vs `PATIENT`)**: Respostas em linguagem técnica farmacológica para profissionais ou linguagem acolhedora e acessível para pacientes.
+* **Prompt Sanduíche & Ficha Clínica (`farm_history`)**: Ancoragem estrita nas bulas da ANVISA (`<bula>`), cruzamento seguro com dados do paciente (`<perfil_paciente>`: idade, IMC calculado, gestação/lactação, alergias, medicações contínuas, esportes e sono) e sanitização contra *Prompt Injection*.
+* **Streaming em Tempo Real (SSE)**: Transmissão da análise palavra por palavra via Server-Sent Events (`/api/chat/stream`), reduzindo o tempo de espera percebido.
+* **Calculadoras Farmacêuticas Determinísticas (`farmCalc`)**: Cálculo matemático estrito em Java para Dose Pediátrica por Peso e Clearance de Creatinina (Cockcroft-Gault), sem risco de alucinação.
+* **Fallback Seguro de Saúde**: Caso a IA esteja indisponível, o sistema **não gera simulações médicas arbitrárias**; aciona o alerta `restriction` e exibe links oficiais pré-aprovados (ANVISA e Medscape).
+* **Guardrails de Escopo**: Bloqueio automático de perguntas fora do contexto médico/farmacológico.
 
 ---
 
 ## 🛠️ 2. Arquitetura e Tecnologias Utilizadas
 
-### **Backend (Servidor & APIs)**
-* **Linguagem**: Python 3.10+
-* **Framework Web**: **FastAPI** (Assíncrono, OpenAPI Swagger em `/docs`)
-* **Validação de Dados & DTOs**: **Pydantic v2**
+### **🐍 Backend IA & RAG (`backend/ai-engine` — Porta `5000`)**
+* **Linguagem & Framework**: Python 3.10+ com **FastAPI** (Assíncrono, Swagger em `/docs`)
+* **Validação & DTOs**: **Pydantic v2**
 * **Servidor ASGI**: **Uvicorn**
-* **ORM & Banco de Dados**: **SQLAlchemy 2.0 (Async)** com suporte a **PGVector** (PostgreSQL) e SQLite (Dev Local)
-* **Processamento de PDFs**: **`pdfplumber`** (Extração limpa de texto de bulas em PDF)
-* **Cliente HTTP Assíncrono**: **HTTPX**
+* **ORM & Banco Vetorial**: **SQLAlchemy 2.0 (Async)** + **PGVector** (índice HNSW para busca de similaridade de cosseno em vetores de 768 dimensões)
+* **Extração de Bulas**: **`pdfplumber`** (Processamento e chunking de PDFs oficiais da ANVISA)
+* **Provedor de IA**: Google Gemini API (`gemini-3.5-flash-lite` / `gemini-3.5-flash` + `gemini-embedding-001`) via **HTTPX**
 
-### **Inteligência Artificial & RAG**
-* **Provedor Principal**: Google Gemini API (`gemini-1.5-flash` + Text Embeddings)
-* **Provedor Secundário**: Anthropic Claude API (`claude-3-5-sonnet`)
-* **Busca Vetorial**: PGVector (PostgreSQL) para similaridade de cosseno em chunks de bulas
+### **☕ Backend Core API (`backend/core-api` — Porta `8080`)**
+* **Linguagem & Framework**: **Java 17** com **Spring Boot 3** (Spring Web, Spring Data JPA, Bean Validation, PostgreSQL Driver)
+* **Padrão Híbrido**:
+  * **Infraestrutura e Persistência**: Controladores REST (`AuthController`, `PerfilController`, `ClinicalController`, `CalculatorController`) e entidades JPA (`user_register`, `farm_history`, `historico_consultas`, `trusted_sources`).
+  * **Regras de Negócio e Cálculos Clínicos**: Java 100% Tradicional (`farmCalc.java`, `TokenService.java`).
 
-### **Frontend (Interface do Usuário)**
-* **Core**: Vanilla HTML5 e JavaScript ES6+ (Arquitetura SPA)
-* **Estilização**: Vanilla CSS3 com tokens de design, vidro fosco (glassmorphism), temas escuro/claro e layouts responsivos
-* **Consumo de API**: Fetch API com leitor de stream em tempo real (`ReadableStreamReader`)
+### **🎨 Frontend (`frontend/` — Porta `3000`)**
+* **Stack**: **React 18 + TypeScript (`.tsx`)** com **Vite**
+* **Estilização**: CSS3 com variáveis de tema Claro/Escuro e tokens semânticos dos 4 alertas (`danger`, `warning`, `restriction`, `info`)
+* **Proxy Integrado**: Roteamento automático no Vite para o `ai-engine` (`5000`) e para a `core-api` (`8080`)
 
-### **DevOps & Infraestrutura**
-* **Containerização**: Docker & Docker Compose
-* **Proxy Reverso**: Nginx (para roteamento transparente da API e frontend na porta `80`)
+### **🗄️ Banco de Dados & DevOps (`Porta 5432`)**
+* **Banco de Dados**: PostgreSQL 16 com extensão `pgvector/pgvector:pg16`
+* **Containerização**: Docker & Docker Compose + Makefile
 
 ---
 
@@ -51,128 +53,174 @@ A plataforma combina a potência dos modelos de linguagem de última geração (
 
 ```text
 C:\workspace\TCC/
-├── .env                              # Variáveis de ambiente (Chaves de API)
+├── .env                              # Variáveis de ambiente (Chave GEMINI_API_KEY e banco)
 ├── .env.example                      # Modelo de variáveis de ambiente
-├── .gitignore                        # Regras de exclusão do Git
-├── README.md                         # Documentação principal do repositório
-├── GEMINI.md                         # Diretrizes automáticas de contexto do projeto
-├── docker-compose.yml                # Orquestrador de containers Docker
-├── docs/                             # Documentos e relatórios de arquitetura
-│   ├── backend_architecture_plan.md  # Plano Mestre de Arquitetura e Schemas DTO
-│   └── projeto_medinteract_relatorio_viabilidade.md # Relatório de Viabilidade e Roteiro
-├── Modelo Projeto/                   # Diagramas visuais de banco, RAG e fluxos de dados
-│   ├── IMG-20260413-WA0011.jpg       # Diagrama de Arquitetura Geral
-│   ├── IMG-20260413-WA0012.jpg       # Modelo Relacional das Tabelas
-│   └── IMG-20260413-WA0015.jpg       # Fluxo de Armazenamento e Ingestão de Bulas
-├── Script/                           # Scripts de raspagem e automação de bulas
-│   └── Script Python/                # Scripts Python para download de PDFs da ANVISA
-├── frontend/                         # Interface do Usuário
-│   ├── Dockerfile                    # Container Nginx para servir a interface
-│   ├── index.html                    # Estrutura HTML principal
-│   ├── nginx.conf                    # Configuração de proxy reverso (/api)
-│   ├── css/style.css                 # Tokens de design e estilos
-│   └── js/app.js                     # Lógica da aplicação web e leitor de SSE
-└── backend/                          # Servidor FastAPI
-    ├── Dockerfile                    # Container Python + Uvicorn
-    ├── main.py                       # Ponto de entrada da aplicação FastAPI
-    ├── requirements.txt              # Dependências Python
-    └── app/                          # Arquitetura por Camadas
-        ├── config.py                 # Leitura de .env via Pydantic BaseSettings
-        ├── api/                      # Camada de Controladores / Rotas
-        │   ├── router.py             # Agregador de rotas
-        │   └── endpoints/            # Chat (/api/chat), Health (/api/health), etc.
-        ├── schemas/                  # DTOs Pydantic (Chat, Erros, Usuário, Calculadoras)
-        ├── services/                 # Regras de negócio (AIService, RAGService, PromptService)
-        ├── db/                       # Sessão SQLAlchemy e Tabelas (Users, Bula_Chunks, User_History)
-        └── utils/                    # Helpers (SSE e Logging)
+├── package.json                      # Scripts centralizados (npm run dev, check, chat, etc.)
+├── Makefile                          # Atalhos para Docker Compose e manutenção do banco
+├── docker-compose.yml                # Orquestrador de containers (postgres-db + ai-engine)
+├── README.md                         # Documentação principal e guia de comandos
+├── GEMINI.md                         # Diretrizes e padrões de arquitetura do projeto
+├── Script/
+│   └── bulario/                      # Acervo de bulas oficiais da ANVISA em PDF
+├── frontend/                         # Interface Web em React + TypeScript (.tsx) + Vite
+│   ├── package.json                  # Dependências e scripts do Vite/TypeScript
+│   ├── tsconfig.json                 # Configuração do compilador TypeScript
+│   ├── vite.config.ts                # Proxy de desenvolvimento (/api -> 8080 e 5000)
+│   ├── index.html                    # Entrada HTML raiz
+│   └── src/                          # Componentes .tsx, estilos (theme.css) e tipagens
+└── backend/
+    ├── ai-engine/                    # Motor Python (FastAPI + RAG + PGVector + Gemini)
+    │   ├── main.py                   # Ponto de entrada do servidor FastAPI (Porta 5000)
+    │   ├── cli_chat.py               # Chat interativo via terminal para testes rápidos
+    │   ├── requirements.txt          # Dependências Python
+    │   ├── tests/                    # Testes unitários (Guardrail, Prompt Sanduíche, IMC, RAG)
+    │   └── app/                      # Camadas: api/, db/ (models, session, seed), schemas/, services/
+    └── core-api/                     # Servidor Java 17 (Spring Boot 3 — Porta 8080)
+        ├── pom.xml                   # Configuração Maven e dependências
+        └── src/main/java/com/medinteract/coreapi/
+            ├── controller/           # Auth, Perfil, Clinical, Calculator e Health Controllers
+            ├── model/                # Entidades User (user_register), FarmHistory, UserHistory
+            ├── repository/           # Repositórios Spring Data JPA
+            └── service/              # Cálculos clínicos em Java Tradicional (farmCalc, TokenService)
 ```
 
 ---
 
-## 🗺️ 4. Etapas de Execução do Desenvolvimento
+## 🗺️ 4. Status dos Ciclos de Desenvolvimento
 
-O desenvolvimento do projeto é conduzido em **5 Etapas Sequenciais**:
-
-| Etapa | Descrição | Status |
+| Ciclo | Descrição | Status |
 | :--- | :--- | :---: |
-| **Fase 0** | Planejamento Mestre, Arquitetura por Camadas e Documentação | 🟢 Concluído |
-| **Etapa 1** | Fundação do Backend FastAPI, Schemas Pydantic, Engine de IA & Streaming SSE | ⏳ Em Andamento |
-| **Etapa 2** | Processamento de Bulas em PDF com `pdfplumber` e Gerador de Chunks | 📋 Planejado |
-| **Etapa 3** | Banco de Dados Vetorial (PostgreSQL + PGVector) e Pipeline RAG | 📋 Planejado |
-| **Etapa 4** | Validador de Escopo (Fuga de Assunto) e Adaptação de Perfil (`PROFESSIONAL` vs `PATIENT`) | 📋 Planejado |
-| **Etapa 5** | Conexão com Frontend, Emissão de Laudos e Dockerização Final | 📋 Planejado |
+| **Ciclo 1** | Preparação do Banco (`PGVector` + HNSW) e Script Resiliente de Ingestão de Bulas (`seed.py`) | 🟢 Concluído |
+| **Ciclo 2** | Motor de IA e RAG no FastAPI (Guardrails, Prompt Sanduíche, Streaming SSE e Fallback Seguro) | 🟢 Concluído |
+| **Ciclo 3** | Core API Java — Autenticação (`user_register`) e Ficha Clínica (`farm_history`) por `UUID` | 🟢 Concluído |
+| **Ciclo 4** | Core API Java — Orquestração com Python e Calculadoras Farmacêuticas (`farmCalc`) | 🟢 Concluído |
+| **Ciclo 5** | Frontend em React + TypeScript (`.tsx`), Tema Claro/Escuro, Login, Ficha Clínica e Streaming | ⏳ Em Andamento |
+| **Ciclo 6** | Alertas Visuais, Telas de Calculadoras, Impressão de Laudo e Dockerização Final | 📋 Planejado |
 
 ---
 
-## 🚨 5. Padronização de Alertas e Erros na UI
+## ⚡ 5. Guia Completo de Comandos do Projeto
 
-Para garantir uma experiência de usuário uniforme, todas as respostas de erro da API seguem uma estrutura padronizada contendo a classificação do alerta na interface:
+Todos os comandos abaixo devem ser executados na **raiz do projeto (`C:\workspace\TCC`)**.
 
-```json
-{
-  "error": {
-    "code": "AI_SERVICE_UNAVAILABLE",
-    "title": "Serviço Indisponível",
-    "message": "Os serviços de Inteligência Artificial estão temporariamente indisponíveis.",
-    "alert_type": "restriction",
-    "status_code": 503,
-    "timestamp": "2026-08-11T21:35:00Z",
-    "links": [
-      { "name": "Bulário Eletrônico da ANVISA", "url": "https://consultas.anvisa.gov.br/#/bulario/" }
-    ]
-  }
-}
+### 🚀 5.1. Comandos de Execução (`npm run`)
+
+| Comando | O que faz |
+| :--- | :--- |
+| **`npm run dev`** | **Inicia o programa completo de uma só vez**: sobe o container `postgres-db` (`5432`), inicia o Backend Python (`5000`), o Backend Java (`8080`) e o Frontend React/Vite (`3000`). Ao apertar `Ctrl + C`, encerra os servidores automaticamente. |
+| **`npm run dev:python`** | Inicia apenas o servidor **Backend Python (`ai-engine` FastAPI)** na porta `5000`. |
+| **`npm run dev:java`** | Inicia apenas o servidor **Backend Java (`core-api` Spring Boot 3)** na porta `8080`. |
+| **`npm run dev:frontend`** | Inicia apenas o servidor de desenvolvimento do **Frontend (Vite + React)** na porta `3000`. |
+| **`npm run chat`** | Abre o **Chat Interativo direto no Terminal** para conversar e testar perguntas no Gemini + RAG sem precisar abrir o navegador. |
+
+```powershell
+# Executar todo o ecossistema (Banco + Python + Java + Frontend)
+npm run dev
+
+# Ou iniciar cada serviço individualmente em terminais separados:
+npm run dev:python
+npm run dev:java
+npm run dev:frontend
+
+# Testar perguntas à IA diretamente pelo console/terminal:
+npm run chat
 ```
-
-* **`danger`**: Falhas críticas de rede ou servidor (500).
-* **`warning`**: Erros de validação de formulário ou dados incompletos (400/422).
-* **`restriction`**: Fallback seguro ativado por ausência de IA, exibindo fontes externas oficiais.
-* **`info`**: Avisos educativos e informativos gerais.
 
 ---
 
-## 🚀 6. Como Executar o Projeto
+### ✅ 5.2. Comandos de Verificação, Testes e Build (`npm run`)
 
-### **Pré-requisitos**
-* [Docker Desktop](https://www.docker.com/) e Docker Compose instalados.
-* [Python 3.10+](https://www.python.org/) (opcional para rodar sem Docker).
+| Comando | O que faz |
+| :--- | :--- |
+| **`npm run check`** | **Validação completa**: executa em sequência `check:python`, `check:java` e `check:frontend`. |
+| **`npm run check:python`** | Verifica a sintaxe (`py_compile`) dos módulos principais do `ai-engine`. |
+| **`npm run check:java`** | Compila todas as classes Java 17 e testes da `core-api` via Maven (`test-compile`). |
+| **`npm run check:frontend`** | Valida toda a tipagem TypeScript (`.tsx`) do Frontend com `tsc --noEmit`. |
+| **`npm run test:python`** | Executa a suíte de testes unitários do Python (`Guardrail`, `Prompt Sanduíche`, `Sanitização XML`, `IMC` e `RAG`). |
+| **`npm run build:java`** | Gera o pacote `.jar` de produção da `core-api` em `backend/core-api/target/`. |
 
-### **Passo 1: Configurar Variáveis de Ambiente**
-Crie um arquivo `.env` na raiz do projeto (baseando-se no `.env.example`):
-```env
-GEMINI_API_KEY=sua_chave_do_google_ai_studio_aqui
-ANTHROPIC_API_KEY=sua_chave_opcional_aqui
-PORT=5000
-```
-
-### **Passo 2: Subir a Aplicação via Docker**
-No terminal, execute:
-```bash
-docker-compose up --build
-```
-
-### **Passo 3: Comandos de Verificação de Build e Sintaxe (`npm run`)**
-Na raiz do projeto (`C:\workspace\tcc`), você pode validar a compilação do Java (`core-api`) e a sintaxe do Python (`ai-engine`) a qualquer momento com os scripts do [`package.json`](file:///C:/workspace/tcc/package.json):
-
-```bash
-# Verifica de uma só vez a sintaxe do Python (ai-engine) + compilação Maven do Java (core-api)
+```powershell
+# Rodar todas as checagens (Python + Java + Frontend) de uma vez:
 npm run check
 
-# Verifica apenas os módulos Python (FastAPI / SQLAlchemy / RAG)
-npm run check:python
+# Rodar os testes unitários do motor Python:
+npm run test:python
 
-# Compila todas as classes Java 17 (Spring Boot 3) via Maven test-compile
-npm run check:java
-
-# Empacota o arquivo .jar final da Core API Java
+# Empacotar o .jar do Backend Java:
 npm run build:java
 ```
 
-### **Passo 4: Acessar a Plataforma**
-Abra o navegador no endereço:  
-👉 **`http://localhost`** (Interface Gráfica)  
-👉 **`http://localhost:8080/api/core/health`** (Core API Java — Spring Boot 3)  
-👉 **`http://localhost:5000/docs`** (Documentação Interativa da API Python — Swagger)
+---
+
+### 🗄️ 5.3. Comandos do Banco de Dados e Ingestão de Bulas (`seed.py`)
+
+Para vetorizar as bulas em PDF da pasta `Script/bulario/` no PostgreSQL (`bula_chunks`):
+
+```powershell
+# Subir apenas o banco de dados PostgreSQL + PGVector no Docker
+docker compose up -d postgres-db
+
+# Rodar o seed padrão (primeiras 9 bulas prioritárias com controle de rate-limit)
+python -m app.db.seed
+
+# Ou executar a partir da raiz especificando limite de PDFs e teto de chunks:
+python backend/ai-engine/app/db/seed.py --limit 20 --max-chunks 850 --batch-size 20
+
+# Processar todas as bulas do diretório Script/bulario/ (respeitando o teto de chunks por rodada):
+python backend/ai-engine/app/db/seed.py --limit 0 --max-chunks 850
+```
+
+---
+
+### 🐳 5.4. Comandos Docker Compose e `Makefile`
+
+```powershell
+# Subir banco de dados e ai-engine em background via Docker Compose
+docker compose up -d
+
+# Reconstruir imagens e subir containers
+docker compose up --build -d
+
+# Parar todos os containers
+docker compose down
+
+# Abrir o terminal SQL (psql) diretamente dentro do banco medinteract
+docker compose exec postgres-db psql -U postgres -d medinteract
+```
+
+Caso utilize a ferramenta `make` (configurada no [`Makefile`](file:///C:/workspace/TCC/Makefile)):
+* `make up` — Sobe os containers em segundo plano (`docker-compose up -d`)
+* `make down` — Desliga os containers (`docker-compose down`)
+* `make build` — Reconstrói e sobe os containers (`docker-compose up --build -d`)
+* `make log` — Exibe os logs em tempo real (`docker-compose logs -f`)
+* `make dataBase` — Abre o console interativo `psql` no banco `medinteract`
+* `make seed` — Executa a vetorização de bulas dentro do container `ai-engine`
+* `make clean` — Remove pastas temporárias `__pycache__`
+
+---
+
+## 🌐 6. Endereços e Portas dos Serviços Locais
+
+Quando a aplicação estiver em execução (`npm run dev`), acesse:
+
+| Serviço | Endereço Local | Descrição |
+| :--- | :--- | :--- |
+| **🎨 Frontend (React + Vite)** | `http://localhost:3000` | Interface gráfica principal do usuário |
+| **☕ Core API Java (Health)** | `http://localhost:8080/api/core/health` | Status da API Spring Boot 3, Login, Ficha Clínica e Calculadoras |
+| **🐍 AI Engine Python (Swagger)** | `http://localhost:5000/docs` | Documentação interativa (Swagger UI) para testar o Gemini e o RAG |
+| **🐍 AI Engine Python (Health)** | `http://localhost:5000/api/health` | Status do servidor FastAPI |
+| **🗄️ PostgreSQL + PGVector** | `localhost:5432` | Banco `medinteract` (usuário: `postgres` / senha: `postgrespassword`) |
+
+---
+
+## 🚨 7. Padronização de Alertas na Interface (`alert_type`)
+
+Todas as respostas clínicas e tratativas de erro retornam um `alert_type` padronizado para renderização visual na UI:
+
+* **`danger`** (Vermelho): Interação medicamentosa grave, contraindicação formal ou erro crítico.
+* **`warning`** (Amarelo): Uso com cautela, necessidade de monitoramento clínico ou ajuste de dose.
+* **`restriction`** (Laranja/Restrição): **Fallback Seguro de Saúde** ativado quando a IA está indisponível, exibindo links oficiais da ANVISA e Medscape.
+* **`info`** (Azul): Orientações educativas, ausência de interação relatada em bula ou bloqueio educativo de fuga de escopo.
 
 ---
 
