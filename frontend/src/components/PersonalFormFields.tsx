@@ -110,15 +110,18 @@ export default function PersonalFormFields({ values, onChange, disabled }: Perso
         />
       </div>
       <div className="field">
-        <label htmlFor="pf-saude">Problemas de saúde</label>
+        <label htmlFor="pf-saude">Doenças ou condições de saúde (com breve descrição de como afetam você)</label>
         <textarea
           id="pf-saude"
           className="input"
-          placeholder="Ex.: hipertensão, diabetes"
+          placeholder="Ex.: Doença de Berger (compromete a filtração e função dos rins); Gastrite (inflamação e queimação no estômago)"
           value={values.problemasSaude}
           disabled={disabled}
           onChange={(e) => onChange({ problemasSaude: e.target.value })}
         />
+        <span className="field-hint">
+          Descreva brevemente como a doença afeta o seu corpo para que a IA cruze com os avisos da bula.
+        </span>
       </div>
       <div className="field">
         <label htmlFor="pf-meds">Medicações contínuas</label>
