@@ -101,18 +101,4 @@ export interface Notice {
   alertType: AlertType;
 }
 
-export interface PediatricDoseResponse {
-  weight: number;
-  dosePerKg: number;
-  recommendedDose: number;
-  totalDoseMg: number;
-  unit: string;
-}
 
-export interface RenalClearanceResponse {
-  renalClearanceMlMin: number;
-  creatinineClearance: number;
-  unit: string;
-  renalClassification: string;
-  renalStageClassification: string;
-}

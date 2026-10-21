@@ -2,7 +2,6 @@ package com.medinteract.coreapi;
 
 import com.medinteract.coreapi.model.FarmHistory;
 import com.medinteract.coreapi.service.TokenService;
-import com.medinteract.coreapi.service.farmCalc;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -10,37 +9,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// Testes unitários da lógica farmacológica tradicional (farmCalc), IMC e segurança (TokenService)
+// Testes unitários de IMC e segurança (TokenService)
 class CoreApiUnitTest {
 
-    private final farmCalc calculator = new farmCalc();
     private final TokenService tokenService = new TokenService("chave-secreta-teste-unitario-2026");
-
-    // Verifica o cálculo da dose pediátrica total por peso corpóreo
-    @Test
-    void testPediatricDoseCalculation() {
-        double dose = calculator.totalDose(18.5, 15.0);
-        assertEquals(277.5, dose, 0.01);
-    }
-
-    // Verifica a equação de Cockcroft-Gault para pacientes do sexo masculino e feminino
-    @Test
-    void testCockcroftGaultClearanceMaleAndFemale() {
-        double clearanceMale = calculator.renalClearanceCalc(65, 72.0, 1.2, "M");
-        double clearanceFemale = calculator.renalClearanceCalc(65, 72.0, 1.2, "F");
-        assertEquals(62.5, clearanceMale, 0.01);
-        assertEquals(53.13, clearanceFemale, 0.01);
-        assertEquals(0.0, calculator.renalClearanceCalc(65, 72.0, 0.0, "M"));
-    }
-
-    // Verifica a classificação clínica dos estágios de função renal
-    @Test
-    void testRenalFunctionClassification() {
-        assertEquals("Normal", calculator.renalFunctionClassification(95.0));
-        assertEquals("Leve", calculator.renalFunctionClassification(70.0));
-        assertEquals("Moderada", calculator.renalFunctionClassification(45.0));
-        assertTrue(calculator.renalFunctionClassification(20.0).contains("severa"));
-    }
 
     // Verifica o cálculo automático de IMC na entidade FarmHistory
     @Test
